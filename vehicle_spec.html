@@ -1455,6 +1455,140 @@ However, interior or exterior temperature must be distinguished in vehicles.
 </section>
 <!--------------------- End of Climate Interfaces -------------------------->
 
+<!--------------------------------------------------------------------------->
+<!---------------------- Vision and Parking Interfaces ----------------------------->
+<section id="vision-parking-interfaces">
+      <h2>Vision and Parking Interfaces</h2>
+      <p>the act of inspecting or testing the condition of vehicle 
+  		subsystems (e.g., engine) and servicing or replacing parts and fluids.</p>
+  		
+  	  <div class='note'>
+      <p>
+	Those three categories need to be more clearly defined. It will help determine data elements fall within them. 
+	Vision system and parking seems not very clear in regards with Driving safety where some functions are also related to parking and vision.
+	It is clear that certain elements could fall within multiple categories depending on how one might want to classify them.
+	Vision is much more than only lane departure warning.
+	Electric vehicle category should be renamed in order to cover alternate power trains (hybrid, range extenders,etc)
+	</p>
+  	</div>
+
+		  <dl title="partial interface Vehicle" class="idl">  
+		    <!-- maintenance types: -->
+		    <dt>readonly attribute VehicleInterface ? laneDepartureStatus</dt>
+		    <dd>Must return VehicleInterface for <a>LaneDepartureStatus</a> or undefined if not supported</dd>
+		    <dt>readonly attribute VehicleInterface ? alarm</dt>
+		    <dd>Must return VehicleInterface for <a>Alarm</a></dd>
+		    <dt>readonly attribute VehicleInterface ? parkingBrake</dt>
+		    <dd>Must return VehicleInterface for <a>ParkingBrake</a></dd>
+ 		    <dt>readonly attribute VehicleInterface ? parkingLights</dt>
+		    <dd>Must return VehicleInterface for <a>ParkingLights</a></dd>
+ 		    <dt>readonly attribute VehicleInterface ? parkingLightsSettings</dt>
+		    <dd>Must return VehicleInterface for <a>ParkingLightsSettings</a></dd>
+		  </dl>
+
+<!------------------------ Interface LaneDepartureDetection (Vision) ------------------------------>
+<section>
+  <h3><a>LaneDepartureDetection</a> Interface</h3>
+  <p>The <a>LaneDepartureDetection</a> interface represents the current status of the lane departure warning function.
+
+  <dl title="enum LaneDepartureStatus" class="idl">
+  	<dt>off</dt>
+  	<dd>The function is not running</dd>
+  	<dt>pause</dt>
+  	<dd>The function has been paused (running, but inactive) </dd>
+  	<dt>running</dt>
+  	<dd>The function is in its operational mode</dd>
+  </dl>
+
+  <dl title="[NoInterfaceObject] interface LaneDepartureDetection : VehicleCommonDataType" class="idl">
+     <dt>attribute LaneDepartureStatus status</dt>
+     <dd>current status of Lane departure warning function.</dd>
+  </dl>
+ </section>
+
+<!------------------------ Interface Alarm (Parking)------------------------------>
+<section>
+  <h3><a>Alarm</a> Interface</h3>
+  <p>The <a>Alarm</a> interface represents the current status of the in vehicle Alarm system.
+
+  <dl title="enum AlarmStatus" class="idl">
+  	<dt>Disarmed</dt>
+  	<dd>0 = The alarm is not armed</dd>
+  	<dt>PreArmed</dt>
+  	<dd>1 = The function is temporary not active</dd>
+  	<dt>Armed</dt>
+  	<dd>2 = The function is active</dd>
+	<dt>Alarmed</dt>
+  	<dd>3 = The Alarm is screaming </dd>
+  </dl>
+
+  <dl title="[NoInterfaceObject] interface Alarm : VehicleCommonDataType" class="idl">
+     <dt>attribute AlarmStatus status</dt>
+     <dd>current status of In vehicle Alarm System.</dd>
+  </dl>
+ </section> 
+ 
+ <!------------------------ Interface ParkingBrake (Parking)------------------------------>
+<section>
+  <h3><a>ParkingBrake</a> Interface</h3>
+  <p>The <a>ParkingBrake</a> interface represents the current status of the parking brake.
+
+  <dl title="enum ParkingBrakeStatus" class="idl">
+  	<dt>Inactive</dt>
+  	<dd>0 = Parking brake is not engaged (driving position)</dd>
+  	<dt>Active</dt>
+  	<dd>1 = Parking brake is engaged (parking position)</dd>
+  	<dt>Error</dt>
+  	<dd>2 = There is a problem with the parking brake system</dd>
+  </dl>
+
+  <dl title="[NoInterfaceObject] interface ParkingBrake : VehicleCommonDataType" class="idl">
+     <dt>attribute ParkingBrakeStatus status</dt>
+     <dd>current status of parking brake.</dd>
+  </dl>
+ </section> 
+ 
+  <!------------------------ Interface ParkingLights (Parking)------------------------------>
+<section>
+  <h3><a>ParkingLights</a> Interface</h3>
+  <p>The <a>ParkingLights</a> interface represents the current status of the parking Lights.
+
+  <dl title="enum ParkingLightsStatus" class="idl">
+  	<dt>Off</dt>
+  	<dd>0 = Parking assistance light is disabled</dd>
+  	<dt>On</dt>
+  	<dd>1 = Parking assistance light is enabled</dd>
+  </dl>
+
+  <dl title="[NoInterfaceObject] interface ParkingLights : VehicleCommonDataType" class="idl">
+     <dt>attribute ParkingLightsStatus status</dt>
+     <dd>current status of parking Lights.</dd>
+  </dl>
+ </section> 
+ 
+ <!------------------------ Interface ParkingLightsSettings (Parking) ------------------------------>
+<section>
+  <h3><a>ParkingLightsSettings</a> Interface</h3>
+  <p>The <a>ParkingLightsSettings</a> interface represents the current setting of the parking light.
+
+	<dl title="enum ParkingLightsControl" class="idl">
+		<dt>Off</dt>
+		<dd>Disable parking lights</dd>
+		<dt>On</dt>
+		<dd>Enable parking lights</dd>
+	</dl>
+
+  <dl title="[NoInterfaceObject] interface ParkingLightsSettings : VehicleCommonDataType" class="idl">
+     <dt>attribute ParkingLightsControl	settings</dt>
+     <dd>current setting of the parking lights. It can be used to send user's request for changing setting.</dd>
+  </dl>
+</section>
+
+</section>
+
+<!-------------------------- End of Vision and Parking interfaces -------------------------------------->s
+ 
+
 <!----------------------------- Use Cases ---------------------------------->
 <section class="use-cases">
   <h2><a>Use-Cases</h2>
@@ -1492,6 +1626,51 @@ However, interior or exterior temperature must be distinguished in vehicles.
 					</li>
 			  </ul>
 		  <section>
+  	</section>
+  	<section>
+  		<section>
+			  <h4>Use Cases for Vision interfaces</h4>
+    <ul>
+			<li>
+			To warn when the vehicle goes on another lane (Lane departure warning function)
+			</li>
+			<li>
+			To warn in case of an danger (vehicle, pedestrian, animals, stop sign, red light, ...)
+			</li>
+			<li>
+			To record the scene before and after an accident (for insurance or testimony)
+			</li>
+			<li>
+			To improve vision in the dark
+			</li>
+	  </ul>
+	  </section>
+	  </section>
+	  <section>
+	  <section>
+	<h4>Use Cases for Parking interfaces</h4>
+    <ul>
+			<li>
+			To be informed in case of intrusion in or around the vehicle.
+			</li>
+			<li>
+			To be informed of the parking brake status.
+			</li>
+	  </ul>	  
+	   </section>
+	  </section>
+	  <section>
+	  <section>
+	<h4>Use Cases for Electric Vehicle interfaces</h4>
+    <ul>
+			<li>
+			To see current state of the battery level, remaining time before full charging, ...
+			</li>
+			<li>
+			To check if the charging is plugged or unplugged.
+			</li>
+	  </ul>
+			</section>
   	</section>
 </section>
 <!------------------------- End of Use Cases ------------------------------->
