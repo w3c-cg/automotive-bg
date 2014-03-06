@@ -421,7 +421,7 @@
 <section>
   <h2><a>Transmission</a> Interface</h2>
   <p>The <a>Transmission</a> interface represents the current transmission gear and mode.
-  <dl title="[NoInterfaceObject] interface Transmission : VehiclePropertyType" class="idl">
+  <dl title="[NoInterfaceObject] interface Transmission : VehicleCommonDataType" class="idl">
      
      <dt>readonly attribute octet ? gear</dt>
      <dd>Must return transmission gear position. Range 0 - 10</dd>
@@ -435,7 +435,7 @@
 <section>
   <h2><a>CruiseControlStatus</a> Interface</h2>
   <p>The <a>CruiseControlStatus</a> interface represents cruise control settings.
-  <dl title="[NoInterfaceObject] interface CruiseControlStatus : VehiclePropertyType" class="idl">
+  <dl title="[NoInterfaceObject] interface CruiseControlStatus : VehicleCommonDataType" class="idl">
      <dt>readonly attribute boolean status</dt>
      <dd>Must return whether or not the Cruise Control system is on (true) or off (false)</dd>
      <dt>readonly attribute unsigned short Speed</dt>
@@ -447,7 +447,7 @@
 <section>
   <h2><a>LightStatus</a> Interface</h2>
   <p>The <a>LightStatus</a> interface represents exterior light statuses.
-  <dl title="[NoInterfaceObject] interface LightStatus : VehiclePropertyType" class="idl">
+  <dl title="[NoInterfaceObject] interface LightStatus : VehicleCommonDataType" class="idl">
      <dt>readonly attribute boolean head</dt>
      <dd>Must return headlight status: on (true), off (false)</dd>
      <dt>readonly attribute boolean rightTurn</dt>
@@ -475,7 +475,7 @@
 <section>
   <h2><a>InteriorLightStatus</a> Interface</h2>
   <p>The <a>InteriorLightStatus</a> interface represents interior light status.
-  <dl title="[NoInterfaceObject] interface InteriorLightStatus : VehiclePropertyType" class="idl">
+  <dl title="[NoInterfaceObject] interface InteriorLightStatus : VehicleCommonDataType" class="idl">
      <dt>readonly attribute boolean status</dt>
      <dd> Must return passenger interior light status for the given zone: on (true), off (false)</dd>
   </dl>
@@ -485,7 +485,7 @@
 <section>
   <h2><a>Horn</a> Interface</h2>
   <p>The <a>Horn</a> interface represents horn status.
-  <dl title="[NoInterfaceObject] interface Horn : VehiclePropertyType" class="idl">
+  <dl title="[NoInterfaceObject] interface Horn : VehicleCommonDataType" class="idl">
      <dt>readonly attribute boolean status</dt>
      <dd>Must return Horn status: On (true) or off (false)</dd>
   </dl>
@@ -495,7 +495,7 @@
 <section>
   <h2><a>Chime</a> Interface</h2>
   <p>The <a>Chime</a> interface represents horn status.
-  <dl title="[NoInterfaceObject] interface Chime : VehiclePropertyType" class="idl">
+  <dl title="[NoInterfaceObject] interface Chime : VehicleCommonDataType" class="idl">
      <dt>readonly attribute boolean status</dt>
      <dd>Must return Chime status when a door is open: On (true) or off (false)</dd>
   </dl>
@@ -505,7 +505,7 @@
 <section>
   <h2><a>Fuel</a> Interface</h2>
   <p>The <a>Fuel</a> interface represents vehicle fuel status.
-  <dl title="[NoInterfaceObject] interface Fuel : VehiclePropertyType" class="idl">
+  <dl title="[NoInterfaceObject] interface Fuel : VehicleCommonDataType" class="idl">
      <dt>readonly attribute unsigned short level</dt>
      <dd>Must return fuel level as a percentage of fullness</dd>
      <dt>readonly attribute unsigned short range</dt>
@@ -525,7 +525,7 @@
 <section>
   <h2><a>EngineOil</a> Interface</h2>
   <p>The <a>EngineOil</a> interface represents engine oil status.
-  <dl title="[NoInterfaceObject] interface EngineOil : VehiclePropertyType" class="idl">
+  <dl title="[NoInterfaceObject] interface EngineOil : VehicleCommonDataType" class="idl">
      <dt>readonly attribute unsigned short remaining</dt>
      <dd>Must return remaining engine oil as percentage of fullness</dd>
      <dt>readonly attribute long temperature</dt>
@@ -541,7 +541,7 @@
 <section>
   <h2><a>Acceleration</a> Interface</h2>
   <p>The <a>Acceleration</a> interface represents vehicle acceleration.
-  <dl title="[NoInterfaceObject] interface Acceleration : VehiclePropertyType" class="idl">
+  <dl title="[NoInterfaceObject] interface Acceleration : VehicleCommonDataType" class="idl">
      <dt>readonly attribute unsigned long x</dt>
      <dd>Must return acceleration on the "X" axis as 1/1000 G (gravitational force). </dd>
      <dt>readonly attribute unsigned long y</dt>
@@ -555,7 +555,7 @@
 <section>
   <h2><a>Location</a> Interface</h2>
   <p>The <a>Location</a> interface represents vehicle location status.  This is usually from gps, but could use a number of technologies.
-  <dl title="[NoInterfaceObject] interface Location : VehiclePropertyType" class="idl">
+  <dl title="[NoInterfaceObject] interface Location : VehicleCommonDataType" class="idl">
      <dt>readonly attribute double latitude</dt>
      <dd>Must return latitude in Deg.Min. Range: -180 - +180</dd>
      <dt>readonly attribute double longitude</dt>
@@ -901,7 +901,7 @@ However, interior or exterior temperature must be distinguished in vehicles.
     <dd>TODO: define</dd>
   </dl>
 
-  <dl title="[NoInterfaceObject] interface Transmission : VehiclePropertyType" class="idl">
+  <dl title="[NoInterfaceObject] interface Transmission : VehicleCommonDataType" class="idl">
      
      <dt>readonly attribute octet? gear</dt>
      <dd>Must return transmission gear position. Range 0 - 10</dd>
@@ -915,7 +915,7 @@ However, interior or exterior temperature must be distinguished in vehicles.
 <section>
   <h3><a>CruiseControlStatus</a> Interface</h3>
   <p>The <a>CruiseControlStatus</a> interface represents cruise control settings.
-  <dl title="[NoInterfaceObject] interface CruiseControlStatus : VehiclePropertyType" class="idl">
+  <dl title="[NoInterfaceObject] interface CruiseControlStatus : VehicleCommonDataType" class="idl">
      <dt>readonly attribute boolean status</dt>
      <dd>Must return whether or not the Cruise Control system is on (true) or off (false)</dd>
      <dt>readonly attribute unsigned short Speed</dt>
@@ -927,7 +927,7 @@ However, interior or exterior temperature must be distinguished in vehicles.
 <section>
   <h3><a>LightStatus</a> Interface</h3>
   <p>The <a>LightStatus</a> interface represents exterior light statuses.
-  <dl title="[NoInterfaceObject] interface LightStatus : VehiclePropertyType" class="idl">
+  <dl title="[NoInterfaceObject] interface LightStatus : VehicleCommonDataType" class="idl">
      <dt>readonly attribute boolean head</dt>
      <dd>Must return headlight status: on (true), off (false)</dd>
      <dt>readonly attribute boolean rightTurn</dt>
@@ -955,7 +955,7 @@ However, interior or exterior temperature must be distinguished in vehicles.
 <section>
   <h3><a>InteriorLightStatus</a> Interface</h3>
   <p>The <a>InteriorLightStatus</a> interface represents interior light status.
-  <dl title="[NoInterfaceObject] interface InteriorLightStatus : VehiclePropertyType" class="idl">
+  <dl title="[NoInterfaceObject] interface InteriorLightStatus : VehicleCommonDataType" class="idl">
      <dt>readonly attribute boolean status</dt>
      <dd> Must return passenger interior light status for the given zone: on (true), off (false)</dd>
   </dl>
@@ -965,7 +965,7 @@ However, interior or exterior temperature must be distinguished in vehicles.
 <section>
   <h3><a>Horn</a> Interface</h3>
   <p>The <a>Horn</a> interface represents horn status.
-  <dl title="[NoInterfaceObject] interface Horn : VehiclePropertyType" class="idl">
+  <dl title="[NoInterfaceObject] interface Horn : VehicleCommonDataType" class="idl">
      <dt>readonly attribute boolean status</dt>
      <dd>Must return Horn status: On (true) or off (false)</dd>
   </dl>
@@ -975,7 +975,7 @@ However, interior or exterior temperature must be distinguished in vehicles.
 <section>
   <h3><a>Chime</a> Interface</h3>
   <p>The <a>Chime</a> interface represents horn status.
-  <dl title="[NoInterfaceObject] interface Chime : VehiclePropertyType" class="idl">
+  <dl title="[NoInterfaceObject] interface Chime : VehicleCommonDataType" class="idl">
      <dt>readonly attribute boolean status</dt>
      <dd>Must return Chime status when a door is open: On (true) or off (false)</dd>
   </dl>
@@ -985,7 +985,7 @@ However, interior or exterior temperature must be distinguished in vehicles.
 <section>
   <h3><a>Fuel</a> Interface</h3>
   <p>The <a>Fuel</a> interface represents vehicle fuel status.
-  <dl title="[NoInterfaceObject] interface Fuel : VehiclePropertyType" class="idl">
+  <dl title="[NoInterfaceObject] interface Fuel : VehicleCommonDataType" class="idl">
      <dt>readonly attribute unsigned short level</dt>
      <dd>Must return fuel level as a percentage of fullness</dd>
      <dt>readonly attribute unsigned short range</dt>
@@ -1005,7 +1005,7 @@ However, interior or exterior temperature must be distinguished in vehicles.
 <section>
   <h3><a>EngineOil</a> Interface</h3>
   <p>The <a>EngineOil</a> interface represents engine oil status.
-  <dl title="[NoInterfaceObject] interface EngineOil : VehiclePropertyType" class="idl">
+  <dl title="[NoInterfaceObject] interface EngineOil : VehicleCommonDataType" class="idl">
      <dt>readonly attribute unsigned short remaining</dt>
      <dd>Must return remaining engine oil as percentage of fullness</dd>
      <dt>readonly attribute long temperature</dt>
@@ -1021,7 +1021,7 @@ However, interior or exterior temperature must be distinguished in vehicles.
 <section>
   <h3><a>Acceleration</a> Interface</h3>
   <p>The <a>Acceleration</a> interface represents vehicle acceleration.
-  <dl title="[NoInterfaceObject] interface Acceleration : VehiclePropertyType" class="idl">
+  <dl title="[NoInterfaceObject] interface Acceleration : VehicleCommonDataType" class="idl">
      <dt>readonly attribute unsigned long x</dt>
      <dd>Must return acceleration on the "X" axis as 1/1000 G (gravitational force). </dd>
      <dt>readonly attribute unsigned long y</dt>
@@ -1035,7 +1035,7 @@ However, interior or exterior temperature must be distinguished in vehicles.
 <section>
   <h3><a>Location</a> Interface</h3>
   <p>The <a>Location</a> interface represents vehicle location status.  This is usually from gps, but could use a number of technologies.
-  <dl title="[NoInterfaceObject] interface Location : VehiclePropertyType" class="idl">
+  <dl title="[NoInterfaceObject] interface Location : VehicleCommonDataType" class="idl">
      <dt>readonly attribute double latitude</dt>
      <dd>Must return latitude in Deg.Min. Range: -180 - +180</dd>
      <dt>readonly attribute double longitude</dt>
@@ -1501,7 +1501,7 @@ However, interior or exterior temperature must be distinguished in vehicles.
 
 <!------------------------ Interface  -----------------------
 <section>
-  <h2><a></a> Interface</h2> <p>The <a></a>
+  <h3><a></a> Interface</h3> <p>The <a></a>
   represents</p>
   
   <dl title="[NoInterfaceObject] interface : VehicleCommonDataType"
