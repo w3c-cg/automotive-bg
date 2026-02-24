@@ -1,3 +1,6 @@
+> [!CAUTION]
+> The Automotive and Transportation Business Group was closed on 18 June 2024.
+
 automotive-bg
 =============
 
