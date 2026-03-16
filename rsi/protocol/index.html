@@ -436,22 +436,22 @@ github.com style (c) Vasily Polovnyov <vast@whiteants.net>
   </section>
 
   <section>
-    <h1 style="text-align: center;">Volkswagen Infotainment Web Interface</h1>
+    <h2 style="text-align: center;">Volkswagen Infotainment Web Interface</h2>
     <article class="markdown-body">
       <p>&nbsp;</p>
       <p></p>
-      <h4 style="text-align: center;">protocol definition</h4>
+      <h5 style="text-align: center;">protocol definition</h5>
       <p></p>
       <p style="text-align: center;">
         <img src="../img/curlies.png" alt="viwi">
       </p>
-      <p style="text-align: center;">by Dr. Patrick Bartsch 2013-2016 </p>
+      <p style="text-align: center;">by Dr. Patrick Bartsch 2013-2017 </p>
       <p>&nbsp;</p>
-      <p style="text-align: center;">version: v 1.7.0-<abbr title="World Wide Web Consortium">W3C</abbr></p>
+      <p style="text-align: center;">version: v 1.8.0-<abbr title="World Wide Web Consortium">W3C</abbr></p>
       <p>&nbsp;</p>
 
-      <h2 id="-a-name-introduction-a-introduction">
-        <a id="Introduction"></a>Introduction</h2>
+      <h3 id="-a-name-introduction-a-introduction">
+        <h2 id="-a-name-introduction-a-introduction"><a name="Introduction"></a>Introduction</h2>
       <h3 id="purpose-of-this-document">Purpose of this document</h3>
       <p>This document provides an overview over web services on the WebInfotainment platform. All services provide mainly HTTP_GET, HTTP_POST, HTTP_PUT, HTTP_DELETE (herein called GET, POST, PUT, DELETE) and WebSocket interfaces. The response is always of contentType: <code>application/json</code> (or <code>application/vnd.viwi.v&lt;major&gt;.&lt;minor&gt;.&lt;patch&gt;+json</code> for a <a href="#accessversionedinterface">dedicated version</a>), this also applies for the WebSocket interface. The general approach is a RESTful API.</p>
       <p><img src="img/diagram1.png" alt="Client server architecture"></p>
@@ -459,401 +459,358 @@ github.com style (c) Vasily Polovnyov <vast@whiteants.net>
       <h3 id="paradigms">Paradigms</h3>
       <p>The API described herein follows some general 'design rules' or 'paradigms'. Deviation of actual interface definition must be minimized in a reasonable way.</p>
       <ol>
-	<li>
-	  <p>The depth of the URI tree is limited to 3, i.e. <code>/&lt;service&gt;/&lt;resource&gt;/&lt;element&gt;</code>. While <code>&lt;service&gt;</code> and <code>&lt;resource&gt;</code> are predefined in this document, <code>&lt;element&gt;</code> will always be an identifier or the keyword 'spec'. <code>&lt;resource&gt;</code> is always a collection (e.g stations) and thus has to be a noun plural form, even if the <code>&lt;resource&gt;</code> will also carry a single <code>&lt;element&gt;</code> by design. The  <code>&lt;resource&gt;</code> identifiers must not carry verbs like <code>getAccount</code>or <code>createTrack</code>.</p>
-        </li>
-        <li>
-          <p>An event is considered 'on change' if two subsequent GET requests on the corresponding URI would result in different responses (only the response objects own properties are relevant). If an elements property 'name' is changed, an 'on change' event is fired (<a href="#PublishSubscribe">Publish Subscribe</a>). If an element is added or removed from a list of objects (on resource level), an 'on change' event is fired (<a href="#PublishSubscribe">Publish Subscribe</a>). If a client wants to get notified on nested properties or structures, the corresponding event has to be subscribed individually.</p>
-        </li>
-        <li>
-          <p>To keep the overall network traffic at a minimum, every resource and element access supports filtering. The response filtering concepts "fields", "paging" and "expand" are generally available.</p>
-        </li>
-        <li>
-          <p>Every object inherits from <a href="#XObject">XObject</a>. I.e. every Object has three mandatory properties: id, uri and name. These can not be filtered and will be present in every response object.</p>
-          <ol>
-            <li>
-              <p>Every type of <a href="#XObject">XObject</a> has its own endpoint.</p>
-            </li>
-            <li>
-              <p>An <a href="#XObject">XObject</a> consists only of primitives and references to other <a href="#XObject">XObject</a> or lists of those.</p>
-            </li>
-          </ol>
-        </li>
-        <li>
-          <p>RESTful HTTP calls are the main interface. A client does not necessarily have to register for events, it can also use plain HTTP polling. A polling client will not be automatically updated with the server state. API-Calls that change the server state are responded with a StatusObject only. The altered state has to be accessed via HTTP_GET or by event subscription.</p>
-        </li>
+      <li>
+        <p>The depth of the URI tree is limited to 3, i.e. <code>/&lt;service&gt;/&lt;resource&gt;/&lt;element&gt;</code>. While <code>&lt;service&gt;</code> and <code>&lt;resource&gt;</code> are predefined in this document, <code>&lt;element&gt;</code> will always be an identifier or the keyword <code>$accessrights</code>, <code>$id</code> or <code>$spec</code>. <code>&lt;resource&gt;</code> is always a collection (e.g stations) and thus has to be a noun plural form, even if the <code>&lt;resource&gt;</code> will only carry one single <code>&lt;element&gt;</code> by design. The  <code>&lt;resource&gt;</code> identifiers must not carry verbs like <code>getAccount</code> or <code>createTrack</code>.</p>
+      </li>
+      <li>
+        <p>An event is considered 'on change' if two subsequent GET requests - with no expansion applied (see <a href="#expansion_concept">Expansion concept</a>) - on the corresponding URI would result in different responses. If an elements property 'name' is changed, an 'on change' event is fired (<a href="#PublishSubscribe">Publish Subscribe</a>). Example: Only if an element is added or removed from a list of objects (on resource level), an 'on change' event is fired (<a href="#PublishSubscribe">Publish Subscribe</a>). If a client wants to get notified on nested properties or structures, the corresponding event has to be subscribed individually at element level.</p>
+      </li>
+      <li>
+        <p>To keep the overall network traffic at a minimum, every resource and element access supports filtering. The response filtering concepts "fields", "paging" and "expand" are generally available.</p>
+      </li>
+      <li>
+        <p>Every object inherits from <a href="#XObject">XObject</a>. I.e. every Object has three mandatory properties: id, uri and name. These properties will be present in every response object.</p>
+      <ol>
+      <li>
+        <p>Every instance inherited from <a href="#XObject">XObject</a> has its own endpoint.</p>
+      </li>
+      <li>
+        <p>An <a href="#XObject">XObject</a> consists only of properties with primitive or complex types and references to other <a href="#XObject">XObject</a> or arrays of those.</p>
+      </li>
       </ol>
-      <h3 id="-a-name-httpstatuscodes-a-http-status-codes">
-        <a id="httpstatuscodes"></a>HTTP status codes</h3>
-      <p>All web services have to follow the <abbr title="World Wide Web Consortium">W3C</abbr>/IANA HTTP status code specification (<a href="https://www.ietf.org/rfc/rfc2616.txt">HTTP/1.1 status codes, 2012, RFC2616</a>).</p>
-      <p>This section extends each Status-Code with implication and handling information for a client. The general meaning of status codes remains untouched. The client has to work with any response with a status code defined in <a href="https://www.ietf.org/rfc/rfc2616.txt">RFC2616</a>. In addition to the general <a href="https://www.ietf.org/rfc/rfc2616.txt">RFC2616</a> status code definitions, some status codes are generally not expected by the client, those codes are marked as <em>not applicable</em> in viwi context. Each status code may have a domain specific meaning, which will be described in the according domain section separately. Please note that each service domain may overwrite the <strong>implication</strong> and <strong>client-side treatment</strong>.</p>
+      </li>
+      <li><p>RESTful HTTP calls are the main interface. A client does not necessarily have to register for events, it can also use plain HTTP polling. A polling client will not be automatically updated with the server state. API-Calls that change the server state are responded with a StatusObject only. The altered state has to be accessed via HTTP_GET or by event subscription.</p>
+      </li>
+      </ol>
+      <h3 id="-a-name-httpstatuscodes-a-http-status-codes"><a name="httpstatuscodes"></a>HTTP status codes</h3>
+      <p>All services have to follow the W3C/IANA HTTP status code specification (<a href="https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml">Hypertext Transfer Protocol (HTTP) Status Code Registry</a>).</p>
+      <p>This section extends each Status-Code with implication and handling information for a client. The general meaning of status codes remains untouched. The client has to be able to work with any response with a status code defined in <a href="https://tools.ietf.org/html/rfc6585">RFC6585</a>, <a href="https://www.ietf.org/rfc/rfc7231.txt">RFC7231</a> and <a href="https://tools.ietf.org/html/rfc7725">RFC7725</a>. In addition to the status code definitions, some status codes are generally not expected by the client, those codes are marked as <em>not applicable</em> in viwi context. Each status code may have a domain specific meaning, which will be described in the according domain section separately. Please note that each service domain may overwrite the <strong>implication</strong> and <strong>client-side treatment</strong>.</p>
       <table>
-        <thead>
-          <tr>
-            <th>Code</th>
-            <th>name</th>
-            <th>Implication</th>
-            <th>Client-side treatment</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>100</td>
-            <td>Continue</td>
-            <td>Not applicable.</td>
-            <td>None&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
-          </tr>
-          <tr>
-            <td>101</td>
-            <td>Switching Protocols</td>
-            <td>Only used for establishing websockets, see <a href="https://tools.ietf.org/html/rfc6455#section-4.2.2">RFC6455 section 4.2.2</a>.</td>
-            <td>None</td>
-          </tr>
-          <tr>
-            <td>200</td>
-            <td>OK</td>
-            <td>Used for successful HTTP Requests. This code is used to acknowledge successful change of the resource or element.</td>
-            <td>None</td>
-          </tr>
-          <tr>
-            <td>201</td>
-            <td>Created</td>
-            <td>Used for successfully creating new entities.</td>
-            <td>None</td>
-          </tr>
-          <tr>
-            <td>202</td>
-            <td>Accepted</td>
-            <td>The request has been accepted for processing, but the processing has not been completed. The request might or might not eventually be acted upon. There is no guarantee that the request will be fullfilled.</td>
-            <td>Subscribe to affected entity, if the actual outcome is of interest.</td>
-          </tr>
-          <tr>
-            <td>203</td>
-            <td>Non-Authoritative Information</td>
-            <td>Not applicable.</td>
-            <td>None</td>
-          </tr>
-          <tr>
-            <td>204</td>
-            <td>No Content</td>
-            <td>Not applicable.</td>
-            <td>None</td>
-          </tr>
-          <tr>
-            <td>205</td>
-            <td>Reset Content</td>
-            <td>Not applicable.</td>
-            <td>None</td>
-          </tr>
-          <tr>
-            <td>206</td>
-            <td>Partial Content</td>
-            <td>Not applicable.</td>
-            <td>None</td>
-          </tr>
-          <tr>
-            <td>300</td>
-            <td>Multiple Choices</td>
-            <td>Used if multiple services match the request criteria (service registry only)</td>
-            <td>Client has to select and re-request</td>
-          </tr>
-          <tr>
-            <td>301</td>
-            <td>Moved Permanently</td>
-            <td>Not applicable, see <a href="#service_registry">service registry</a>.</td>
-            <td>None</td>
-          </tr>
-          <tr>
-            <td>302</td>
-            <td>Found</td>
-            <td>Not applicable.</td>
-            <td>None</td>
-          </tr>
-          <tr>
-            <td>303</td>
-            <td>See Other</td>
-            <td>Not applicable.</td>
-            <td>None</td>
-          </tr>
-          <tr>
-            <td>304</td>
-            <td>Not Modified</td>
-            <td>If the entity is not modified, this status code can be sent. This indicates that the client should look for this entity in its cache.</td>
-            <td>None</td>
-          </tr>
-          <tr>
-            <td>305</td>
-            <td>Use Proxy</td>
-            <td>Not applicable.</td>
-            <td>None</td>
-          </tr>
-          <tr>
-            <td>306</td>
-            <td>Unused</td>
-            <td>Not applicable, see <a href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.3.7">status code 306</a>.</td>
-            <td>None</td>
-          </tr>
-          <tr>
-            <td>307</td>
-            <td>Temporary Redirect</td>
-            <td>The requested resource has moved. The new location is send as an absolute URL in the response HTTP-Header <code>Location</code> field.</td>
-            <td>Client should submit a new HTTP request.</td>
-          </tr>
-          <tr>
-            <td>400</td>
-            <td>Bad Request</td>
-            <td>The client submitted a malformed request, repeating the request will not help.</td>
-            <td>Client has to make sure to send a valid request.</td>
-          </tr>
-          <tr>
-            <td>401</td>
-            <td>Unauthorized</td>
-            <td>This request requires authentication.</td>
-            <td>If client is not authenticated, client has to authenticate.</td>
-          </tr>
-          <tr>
-            <td>402</td>
-            <td>Payment Required</td>
-            <td>Not applicable.</td>
-            <td>None</td>
-          </tr>
-          <tr>
-            <td>403</td>
-            <td>Forbidden</td>
-            <td>The client has insufficient rights to obtain the requested information or has submitted an HTTP request with POST method to a property, which is <code>read-only</code> or not allowed to be set by the client(e.g. <code>POST</code> on <code>/car/info</code> property <code>vehicleIdentication</code>).</td>
-            <td>If client do not have access rights, client has to acquire access rights.</td>
-          </tr>
-          <tr>
-            <td>404</td>
-            <td>Not Found</td>
-            <td>The service cannot find the entity, this may be a permanent or temporary condition. Do not expect elements to be generally available. This status code is treated as a valid response. <strong>Use-case specific error handling is required.</strong></td>
-            <td>None</td>
-          </tr>
-          <tr>
-            <td>405</td>
-            <td>Method Not Allowed</td>
-            <td>Not applicable, because all possible HTTP-Methods are defined by the the viwi document and missing privileges are singnaled by status code 403.</td>
-            <td>None</td>
-          </tr>
-          <tr>
-            <td>406</td>
-            <td>Not Acceptable</td>
-            <td>Not applicable.</td>
-            <td>None</td>
-          </tr>
-          <tr>
-            <td>407</td>
-            <td>Proxy Authentication Required</td>
-            <td>Not applicable.</td>
-            <td>None</td>
-          </tr>
-          <tr>
-            <td>408</td>
-            <td>Request Time-out</td>
-            <td>Not applicable. The request sent to the server took longer than the server was prepared to wait. In other words, client connection with server "timed out". Server configuration should rule out this error.</td>
-            <td>None</td>
-          </tr>
-          <tr>
-            <td>409</td>
-            <td>Conflict</td>
-            <td>It is not possible to establish the required state. This might be the case if a client wants to set an objects property that is not writable or that currently can not be set. The <code>message</code> property of <a href="#statusobject">StatusObject</a> may have information for the client to recognize the source of the conflict. This information is only for debugging and development purposes.</td>
-            <td>Resource specific treatment is necessary (e.g. media audioSource might be disabled during navigation announcements, the clients tries to un-mute media). See <a href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.10">status code 409</a> for more information.</td>
-          </tr>
-          <tr>
-            <td>410</td>
-            <td>Gone</td>
-            <td>Not applicable.</td>
-            <td>None</td>
-          </tr>
-          <tr>
-            <td>411</td>
-            <td>Length Required</td>
-            <td>Not applicable, see <a href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.12">status code 411</a>.</td>
-            <td>None</td>
-          </tr>
-          <tr>
-            <td>412</td>
-            <td>Precondition Failed</td>
-            <td>Not applicable.</td>
-            <td>None</td>
-          </tr>
-          <tr>
-            <td>413</td>
-            <td>Request Entity Too Large</td>
-            <td>Not applicable, see <a href="#paging">paging</a>.</td>
-            <td>None</td>
-          </tr>
-          <tr>
-            <td>414</td>
-            <td>Request-URI Too Large</td>
-            <td>Not applicable, see <a href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec3.html#sec3.2.1">RFC2616 section 3.2.1</a>.</td>
-            <td>None</td>
-          </tr>
-          <tr>
-            <td>415</td>
-            <td>Unsupported Media Type</td>
-            <td>Not applicable.</td>
-            <td>None</td>
-          </tr>
-          <tr>
-            <td>416</td>
-            <td>Requested range not satisfiable</td>
-            <td>Not applicable.</td>
-            <td>None</td>
-          </tr>
-          <tr>
-            <td>417</td>
-            <td>Expectation Failed</td>
-            <td>Not applicable.</td>
-            <td>None</td>
-          </tr>
-          <tr>
-            <td>418</td>
-            <td>I’m a teapot</td>
-            <td>Not applicable.</td>
-            <td>None</td>
-          </tr>
-          <tr>
-            <td>420</td>
-            <td>Policy Not Fulfilled</td>
-            <td>Not applicable.</td>
-            <td>None</td>
-          </tr>
-          <tr>
-            <td>421</td>
-            <td>Misdirected Request</td>
-            <td>Not applicable.</td>
-            <td>None</td>
-          </tr>
-          <tr>
-            <td>422</td>
-            <td>Unprocessable Entity</td>
-            <td>Not applicable.</td>
-            <td>None</td>
-          </tr>
-          <tr>
-            <td>423</td>
-            <td>Locked</td>
-            <td>Not applicable.</td>
-            <td>None</td>
-          </tr>
-          <tr>
-            <td>424</td>
-            <td>Failed Dependency</td>
-            <td>Not applicable.</td>
-            <td>None</td>
-          </tr>
-          <tr>
-            <td>429</td>
-            <td>Too Many Requests</td>
-            <td>The user has sent too many requests in a given amount of time.</td>
-            <td>Used to rate-limit access to a certain resource or element</td>
-          </tr>
-          <tr>
-            <td>451</td>
-            <td>Unavailable For Legal Reasons</td>
-            <td>A server operator has received a legal demand to deny access to a resource or to a set of resources that includes the requested resource.</td>
-            <td>Sent, when for any legal reason access to a resource or element is (temporarily) blocked</td>
-          </tr>
-          <tr>
-            <td>500</td>
-            <td>Internal Server Error</td>
-            <td>The server encountered an unexpected condition which prevented it from fulfilling the request.</td>
-            <td>There is no client-side fix/solution for this kind of errors.</td>
-          </tr>
-          <tr>
-            <td>501</td>
-            <td>Not Implemented</td>
-            <td>The server does not support the functionality required to fulfill the request. Unless specified otherwise in service specific status code handling, this error indicates a not-permitted error.</td>
-            <td>Not applicable.</td>
-          </tr>
-          <tr>
-            <td>502</td>
-            <td>Bad Gateway</td>
-            <td>Not applicable.</td>
-            <td>None</td>
-          </tr>
-          <tr>
-            <td>503</td>
-            <td>Service Unavailable</td>
-            <td>Service is currently unable to handle the request. This implies a temporary problem which will be solved after a given delay. If known, the delay <strong>may</strong> be indicated in a <code>Retry-After</code> header.</td>
-            <td>Client should retry to submit the request after delay.</td>
-          </tr>
-          <tr>
-            <td>504</td>
-            <td>Gateway Time-out</td>
-            <td>The request can not be fulfilled because server acts as a proxy and did not receive a timely response from remote component (e.g. ECU of driver assistance).</td>
-            <td>There is no client-side fix/solution for this kind of error. If the remote component expected to be reachable after a delay in this power-cycle then server sends a response with status code 503.</td>
-          </tr>
-          <tr>
-            <td>505</td>
-            <td>HTTP Version not supported</td>
-            <td>Not applicable.</td>
-            <td>None</td>
-          </tr>
-        </tbody>
+      <thead>
+      <tr>
+        <th>Code</th>
+        <th>name</th>
+        <th>Implication</th>
+        <th>Client-side treatment</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc7231#section-6.2.1">100</a></td>
+        <td>Continue</td>
+        <td>Not applicable.</td>
+        <td>None</td>
+      </tr>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc7231#section-6.2.2">101</a></td>
+        <td>Switching Protocols</td>
+        <td>Only used for establishing websockets, see <a href="https://tools.ietf.org/html/rfc6455#section-4.2.2">RFC6455 section 4.2.2</a>.</td>
+        <td>None</td>
+      </tr>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc7231#section-6.3.1">200</a></td>
+        <td>OK</td>
+        <td>Used for successful HTTP Requests. This code is used to acknowledge successful change of the resource or element.</td>
+        <td>None</td>
+      </tr>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc7231#section-6.3.2">201</a></td>
+        <td>Created</td>
+        <td>Used for successfully creating new entities.</td>
+        <td>None</td>
+      </tr>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc7231#section-6.3.3">202</a></td>
+        <td>Accepted</td>
+        <td>The request has been accepted for processing, but the processing has not been completed. The request might or might not eventually be acted upon. There is no guarantee that the request will be fullfilled.</td>
+        <td>Subscribe to affected entity, if the actual outcome is of interest.</td>
+      </tr>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc7231#section-6.3.4">203</a></td>
+        <td>Non-Authoritative Information</td>
+        <td>Not applicable.</td>
+        <td>None</td>
+      </tr>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc7231#section-6.3.5">204</a></td>
+        <td>No Content</td>
+        <td>Not applicable.</td>
+        <td>None</td>
+      </tr>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc7231#section-6.3.6">205</a></td>
+        <td>Reset Content</td>
+        <td>Not applicable.</td>
+        <td>None</td>
+      </tr>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc7233#section-4.1">206</a></td>
+        <td>Partial Content</td>
+        <td>Not applicable.</td>
+        <td>None</td>
+      </tr>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc7231#section-6.4.1">300</a></td>
+        <td>Multiple Choices</td>
+        <td>Used if multiple services match the request criteria (service registry only)</td>
+        <td>Client has to select and re-request</td>
+      </tr>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc7231#section-6.4.2">301</a></td>
+        <td>Moved Permanently</td>
+        <td>Not applicable, see <a href="#service_registry">service registry</a>.</td>
+        <td>None</td>
+      </tr>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc7231#section-6.4.3">302</a></td>
+        <td>Found</td>
+        <td>Not applicable.</td>
+        <td>None</td>
+      </tr>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc7231#section-6.4.4">303</a></td>
+        <td>See Other</td>
+        <td>Not applicable.</td>
+        <td>None</td>
+      </tr>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc7232#section-4.1">304</a></td>
+        <td>Not Modified</td>
+        <td>If the entity is not modified, this status code can be sent. This indicates that the client should look for this entity in its cache.</td>
+        <td>None</td>
+      </tr>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc7231#section-6.4.5">305</a></td>
+        <td>Use Proxy</td>
+        <td>Not applicable.</td>
+        <td>None</td>
+      </tr>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc7231#section-6.4.7">307</a></td>
+        <td>Temporary Redirect</td>
+        <td>The requested resource has moved. The new location is send as an absolute URL in the response HTTP-Header <code>Location</code> field.</td>
+        <td>Client should submit a new HTTP request.</td>
+      </tr>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc7231#section-6.5.1">400</a></td>
+        <td>Bad Request</td>
+        <td>The client submitted a malformed request, repeating the request will not help.</td>
+        <td>Client has to make sure to send a valid request.</td>
+      </tr>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc7235#section-3.1">401</a></td>
+        <td>Unauthorized</td>
+        <td>This request requires authentication.</td>
+        <td>If client is not authenticated, client has to authenticate.</td>
+      </tr>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc7231#section-6.5.2">402</a></td>
+        <td>Payment Required</td>
+        <td>Not applicable.</td>
+        <td>None</td>
+      </tr>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc7231#section-6.5.3">403</a></td>
+        <td>Forbidden</td>
+        <td>The client has insufficient rights to obtain the requested information or has submitted an HTTP request with POST method to a property, which is <code>read-only</code> or not allowed to be set by the client(e.g. <code>POST</code> on <code>/car/info</code> property <code>vehicleIdentication</code>).</td>
+        <td>If client do not have access rights, client has to acquire access rights.</td>
+      </tr>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc7231#section-6.5.4">404</a></td>
+        <td>Not Found</td>
+        <td>The service cannot find the entity, this may be a permanent or temporary condition.  Do not expect elements to be generally available. This status code is treated as a valid response. <strong>Use-case specific error handling is required.</strong></td>
+      </tr>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc7231#section-6.5.5">405</a></td>
+        <td>Method Not Allowed</td>
+        <td>Not applicable, because all possible HTTP-Methods are defined by the the viwi document and missing privileges are singnaled by status code 403.</td>
+        <td>None</td>
+      </tr>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc7231#section-6.5.6">406</a></td>
+        <td>Not Acceptable</td>
+        <td>Not applicable.</td>
+        <td>None</td>
+      </tr>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc7235#section-3.2">407</a></td>
+        <td>Proxy Authentication Required</td>
+        <td>Not applicable.</td>
+        <td>None</td>
+      </tr>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc7231#section-6.5.7">408</a></td>
+        <td>Request Time-out</td>
+        <td>Not applicable. The request sent to the server took longer than the server was prepared to wait. In other words, client connection with server "timed out". Server configuration should rule out this error.</td>
+        <td>None</td>
+      </tr>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc7231#section-6.5.8">409</a></td>
+        <td>Conflict</td>
+        <td>It is not possible to establish the required state. This might be the case if a client wants to set an objects property that is not writable or that currently can not be set. The <code>message</code> property of <a href="#statusobject">StatusObject</a> may have information for the client to recognize the source of the conflict. This information is only for debugging and development purposes.</td>
+        <td>Resource specific treatment is necessary (e.g. media audioSource might be disabled during navigation announcements,  the clients tries to un-mute media). See <a href="https://tools.ietf.org/html/rfc7231#section-6.5.8">RFC7231 section 6.5.8</a> for more information.</td>
+      </tr>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc7231#section-6.5.9">410</a></td>
+        <td>Gone</td>
+        <td>Not applicable.</td>
+        <td>None</td>
+      </tr>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc7231#section-6.5.10">411</a></td>
+        <td>Length Required</td>
+        <td>Not applicable, see  <a href="https://tools.ietf.org/html/rfc7231#section-6.5.10">RFC7231 section 6.5.10</a>.</td>
+        <td>None</td>
+      </tr>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc7232#section-4.2">412</a></td>
+        <td>Precondition Failed</td>
+        <td>Not applicable.</td>
+        <td>None</td>
+      </tr>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc7231#section-6.5.11">413</a></td>
+        <td>Request Entity Too Large</td>
+        <td>Not applicable, see <a href="#paging">paging</a>.</td>
+        <td>None</td>
+      </tr>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc7231#section-6.5.12">414</a></td>
+        <td>Request-URI Too Large</td>
+        <td>Not applicable, see <a href="https://tools.ietf.org/html/rfc7231#section-6.5.12">RFC7231 section 6.5.12</a>.</td>
+        <td>None</td>
+      </tr>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc7231#section-6.5.13">415</a></td>
+        <td>Unsupported Media Type</td>
+        <td>Not applicable.</td>
+        <td>None</td>
+      </tr>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc7233#section-4.4">416</a></td>
+        <td>Requested range not satisfiable</td>
+        <td>Not applicable.</td>
+        <td>None</td>
+      </tr>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc7231#section-6.5.14">417</a></td>
+        <td>Expectation Failed</td>
+        <td>Not applicable.</td>
+        <td>None</td>
+      </tr>
+      <tr>
+       <td><a href="https://tools.ietf.org/html/rfc7231#section-6.5.15">426</a></td>
+        <td>Upgrade Required</td>
+        <td>Not applicable.</td>
+        <td>None</td>
+      </tr>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc6585#section-3">428</a></td>
+        <td>Precondition Required</td>
+        <td>Not applicable.</td>
+        <td>None</td>
+      </tr>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc6585#section-4">429</a></td>
+        <td>Too Many Requests</td>
+        <td>The user has sent too many requests in a given amount of time.</td>
+        <td>Used to rate-limit access to a certain resource or element</td>
+      </tr>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc6585#section-5">431</a></td>
+        <td>Request Header Fields Too Large</td>
+        <td>Client send header fields which are to large or not correctly formated</td>
+        <td>Send smaller and correct header fields</td>
+      </tr>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc7725#section-3">451</a></td>
+        <td>Unavailable For Legal Reasons</td>
+        <td>A server operator has received a legal demand to deny access to a resource or to a set of resources that includes the requested resource.</td>
+        <td>Sent, when for any legal reason access to a resource or element is (temporarily) blocked</td>
+      </tr>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc7231#section-6.6.1">500</a></td>
+        <td>Internal Server Error</td>
+        <td>The server encountered an unexpected condition which prevented it from fulfilling the request.</td>
+        <td>There is no client-side fix/solution for this kind of errors.</td>
+      </tr>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc7231#section-6.6.2">501</a></td>
+        <td>Not Implemented</td>
+        <td>The server does not support the functionality required to fulfill the request. Unless specified otherwise in service specific status code handling, this error indicates a not-permitted error.</td>
+        <td>Not applicable.</td>
+      </tr>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc7231#section-6.6.3">502</a></td>
+        <td>Bad Gateway</td>
+        <td>Not applicable.</td>
+        <td>None</td>
+      </tr>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc7231#section-6.6.4">503</a></td>
+        <td>Service Unavailable</td>
+        <td>Service is currently unable to handle the request. This implies a temporary problem which will be solved after a given delay. If known, the delay <strong>may</strong> be indicated in a <code>Retry-After</code> header.</td>
+        <td>Client should retry to submit the request after delay.</td>
+      </tr>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc7231#section-6.6.5">504</a></td>
+        <td>Gateway Time-out</td>
+        <td>The request can not be fulfilled because server acts as a proxy and did not receive a timely response from remote component (e.g. ECU of driver assistance).</td>
+        <td>There is no client-side fix/solution for this kind of error. If the remote component is expected to be reachable after a delay in this power-cycle then server sends a response with status code 503.</td>
+      </tr>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc7231#section-6.6.6">505</a></td>
+        <td>HTTP Version not supported</td>
+        <td>Not applicable.</td>
+        <td>None</td>
+      </tr>
+      <tr>
+        <td><a href="https://tools.ietf.org/html/rfc6585#section-6">511</a></td>
+        <td>Network Authentication Required</td>
+        <td>The connection to the vehicle infrastructure is not authenticated.</td>
+        <td>Reauthenticate the connection channel.</td>
+      </tr>
+      </tbody>
       </table>
       <h4 id="handling-service-responses-with-respecting-status-codes">Handling service responses with respecting status codes</h4>
-      <p>To communicate with the services a client submits an HTTP request and waits for the response. A response is always sent with a status code. The service uses the pre-defined status codes when sending a response. Each client interpret the response with the respective status code.</p>
+      <p>To communicate with the services a client submits an HTTP request and waits for the response. A response is always sent with a status code. The service uses the pre-defined status codes when sending a response. Each client interprets the response with the respective status code.</p>
       <p>Each status code is categorized as successful (2xx), redirection (3xx), client error (4xx) or server error (5xx). If status code is not successful, then the response must be handled by the client as following:</p>
       <ul>
         <li>If an error can be treated by a client, it is categorized as <strong>permitted errors</strong>. For each permitted error a treatment is defined.</li>
         <li>If an error can not be treated by the client, it is categorized as <strong>not permitted error</strong>.</li>
-        <li>Each service domain may overwrite <strong>permitted</strong> and <strong>not permitted</strong> errors.</li>
+        <li>Each service domain may define, which errors are <strong>permitted</strong> and <strong>not permitted</strong>.</li>
       </ul>
       <h3 id="restful-api">RESTful API</h3>
       <h4 id="general-information">General information</h4>
       <p>The REST architectural style describes six constraints:</p>
       <ul>
-        <li>uniform interface (resource based, self descriptive, ...)</li>
-        <li>statelessness (necessary state to handle the request is contained within the request itself)</li>
-        <li>cacheability (clients can cache responses)</li>
-        <li>client-server architecture (uniform interface separates client and server)</li>
-        <li>layered system (client cannot ordinarily tell whether it is connected directly or intermediary)</li>
-        <li>code on demand <code>optional</code> (Servers are able to temporarily extend or customize the functionality of a client by transferring logic to it)</li>
+      <li>uniform interface (resource based, self descriptive, ...)</li>
+      <li>statelessness (necessary state to handle the request is contained within the request itself)</li>
+      <li>cacheability (clients can cache responses)</li>
+      <li>client-server architecture (uniform interface separates client and server)</li>
+      <li>layered system (client cannot ordinarily tell whether it is connected directly or intermediary)</li>
+      <li>code on demand <code>optional</code> (Servers are able to temporarily extend or customize the functionality of a client by transferring logic to it)</li>
       </ul>
       <p>Conforming to the REST architectural style, will enable any kind of distributed system to have desirable emergent characteristics, such as performance, scalability, simplicity, modifiability, visibility, portability and reliability.</p>
       <p>These constraints, applied to the architecture, were originally communicated by Roy Fielding in his doctoral dissertation and define the basis of RESTful-style.</p>
-      <p>Source: <a href="http://www.ics.uci.edu/~fielding/pubs/dissertation/rest_arch_style.html">http://www.ics.uci.edu/~fielding/pubs/dissertation/rest_arch_style.html</a></p>
+      <p>Source: <a href="https://www.ics.uci.edu/~fielding/pubs/dissertation/rest_arch_style.htm">https://www.ics.uci.edu/~fielding/pubs/dissertation/rest_arch_style.htm</a></p>
       <h5 id="uniform-interface">Uniform interface</h5>
       <p>The uniform interface constraint defines the interface between clients and servers. It simplifies and decouples the architecture, which enables each part to evolve independently. The four guiding principles of the uniform interface are:</p>
       <h6 id="resource-based">Resource-based</h6>
-      <p>Individual resources are identified in requests using URIs as
-      resource identifiers. The resources themselves are conceptually
-      separate from the representations that are returned to the
-      client. For example, the server does not send its database, but
-      rather, some HTML, XML or JSON that represents some database
-      records. For instance data for a finnish client, in Finnish
-      language and encoded in UTF-8, depending on the details of the request and the server implementation.</p>
+      <p>Individual resources are identified in requests using URIs as resource identifiers. The resources themselves are conceptually separate from the representations that are returned to the client. For example, the server does not send its database, but rather, some HTML, XML or JSON that represents some database records. For instance data for a finish client, in Finnish language and encoded in UTF-8, depending on the details of the request and the server implementation.</p>
       <h6 id="manipulation-of-resources-through-representations">Manipulation of resources through representations</h6>
       <p>When a client holds a representation of a resource, including any meta data attached, it has enough information to modify or delete the resource on the server, provided it has permission to do so.</p>
       <h6 id="self-descriptive-messages">Self-descriptive messages</h6>
       <p>Each message includes enough information to describe how to process the message. For example, which parser to invoke may be specified by an Internet media type (previously known as a MIME type). Responses also explicitly indicate their cache-ability.</p>
       <h6 id="hypermedia-as-the-engine-of-application-state-hateoas-">Hypermedia as the engine of application state (HATEOAS)</h6>
-      <p>Clients deliver state via body contents, query-string parameters, request headers and the requested URI (the resource name). Services deliver state to clients via body content, response codes, and response headers. This is technically referred-to as hypermedia (or hyperlinks within hypertext). Aside from the description above, HATEOS also means that, where necessary, links are contained in the returned body (or headers) to supply the URI for retrieval of the object itself or related objects. We'll talk about this in more detail later.</p>
+      <p>Clients deliver state via body contents, query-string parameters, request headers and the requested URI (the resource name). Services deliver state to clients via body content, response codes, and response headers. This is technically referred-to as hypermedia (or hyperlinks within hypertext).
+      Aside from the description above, HATEOAS also means that, where necessary, links are contained in the returned body (or headers) to supply the URI for retrieval of the object itself or related objects.</p>
       <p>The uniform interface that any REST services must provide is fundamental to its design.</p>
       <h5 id="statelessness">Statelessness</h5>
-      <p>As REST is an acronym for REpresentational State Transfer,
-      statelessness is key. Essentially, what this means is that the
-      necessary state to handle the request is contained within the
-      request itself, whether as part of the URI, query-string
-      parameters, body, or headers. The URI uniquely identifies the
-      resource and the body contains the state (or state change) of
-      that resource. Then after the server does it's processing, the
-      appropriate state, or the piece(s) of state that matter, are
-      communicated back to the client via headers, status and response
-      body. Classical - statefull - API design provides us with the
-      concept of programming within a container which maintains state
-      across multiple HTTP requests. In REST, the client must include
-      all information for the server to fulfill the request, resending
-      state as necessary if that state must span multiple
-      requests. Statelessness enables greater scalability since the
-      server does not have to maintain, update or communicate that
-      session state. Additionally, load balancers don't have to worry
-      about session affinity for stateless systems. So what's the
-      difference between state and a resource? State, or application
-      state, is that which the server cares about to fulfill a request
-      - data necessary for the current session or request. A resource, or resource state, is the data that defines the resource representation — the data stored in the database, for instance. Consider application state to be data that could vary by client, and per request. Resource state, on the other hand, is constant across every client who requests it. Ever had back-button issues with a web application where it went AWOL (Absent Without Official Leave - military jargon) at a certain point because it expected you to do things in a certain order? That's because it violated the statelessness principle. There are cases that don't honor the statelessness principle, such as three-legged OAuth, API call rate limiting, etc. However, make every effort to ensure that application state doesn't span multiple requests of your service(s).</p>
+      <p>As REST is an acronym for REpresentational State Transfer, statelessness is key. Essentially, what this means is that the necessary state to handle the request is contained within the request itself, whether as part of the URI, query-string parameters, body, or headers. The URI uniquely identifies the resource and the body contains the state (or state change) of that resource. Then after the server does it's processing, the appropriate state, or the piece(s) of state that matter, are communicated back to the client via headers, status and response body.
+      Classical - statefull - API design provides us with the concept of programming within a container which maintains state across multiple HTTP requests. In REST, the client must include all information for the server to fulfill the request, resending state as necessary if that state must span multiple requests. Statelessness enables greater scalability since the server does not have to maintain, update or communicate that session state. Additionally, load balancers don't have to worry about session affinity for stateless systems.
+      So what's the difference between state and a resource? State, or application state, is the one which the server cares about to fulfill a request - data necessary for the current session or request. A resource, or resource state, is the data that defines the resource representation — the data stored in the database, for instance. Consider application state to be data that could vary by client, and per request. Resource state, on the other hand, is constant across every client who requests it.
+      Ever had back-button issues with a web application where it went AWOL (Absent Without Official Leave - military jargon) at a certain point because it expected you to do things in a certain order? That's because it violated the statelessness principle. There are cases that don't honor the statelessness principle, such as three-legged OAuth, API call rate limiting, etc. However, make every effort to ensure that application state doesn't span multiple requests of your service(s).</p>
       <h5 id="cacheability">Cacheability</h5>
       <p>As on the World Wide Web, clients can cache responses. Responses must therefore, implicitly or explicitly, define themselves as cacheable, or not, to prevent clients reusing stale or inappropriate data in response to further requests. Well-managed caching partially or completely eliminates some client-server interactions, further improving scalability and performance.</p>
       <h5 id="client-server-architecture">Client-server architecture</h5>
@@ -863,246 +820,274 @@ github.com style (c) Vasily Polovnyov <vast@whiteants.net>
       <h5 id="code-on-demand-optional-">Code-on-demand <code>optional</code></h5>
       <p>Servers are able to temporarily extend or customize the functionality of a client by transferring logic to it that it can execute. Examples of this may include compiled components such as Java applets and client-side scripts such as JavaScript.</p>
       <h4 id="application-to-viwi">Application to viwi</h4>
-      <p>The interfaces described inhere follow the RESTful (REST: Representational State Transfer) principles. The main concept in REST is the existence of resources (sources of specific information or services), each of which is referenced with a <code>uri</code> as global identifier. The RESTful API is used to retrieve information for the client (request) from the server (response), while Events provide a channel for communication in server to client direction (push information). The supported HTTP request methods are GET, POST, PUT and DELETE. The following table explains the main principle of interface definition for all services defined hereafter:</p>
+      <p>The interfaces described inhere follow the RESTful principles. The main concept in REST is the existence of resources (sources of specific information or services), each of which is referenced with a <code>uri</code> as global identifier. The RESTful API is used to retrieve information for the client (request) from the server (response), while Events provide a channel for communication in server to client direction (push information). The supported HTTP request methods are GET, POST, PUT and DELETE. The following table explains the main principle of interface definition for all services defined hereafter:</p>
       <table>
         <thead>
           <tr>
-            <th></th>
-            <th>HTTP</th>
-            <th>HTTP</th>
-            <th>HTTP</th>
-            <th>HTTP</th>
-            <th>WebSocket</th>
+            <th>
+              <em>type</em>
+            </th>
+            <th>
+              <em>GET</em> (HTTP)</th>
+            <th>
+              <em>POST</em> (HTTP)</th>
+            <th>
+              <em>PUT</em> (HTTP)</th>
+            <th>
+              <em>DELETE</em> (HTTP)</th>
+            <th>
+              <em>subscribe</em> (WebSocket)</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td><em>type</em></td>
-            <td><em>GET</em></td>
-            <td><em>POST</em></td>
-            <td><em>PUT</em></td>
-            <td><em>DELETE</em></td>
-            <td><em>subscribe </em></td>
+            <td>root URI, such as
+              <code>/</code> or
+              <code>/api/v1/</code>
+            </td>
+            <td>
+              <strong>List</strong> the URIs and perhaps other details of the service known to the system.</td>
+            <td>n/a</td>
+            <td>
+              <strong>Register new service</strong> with the system. The new service's URI is assigned automatically and is returned by the
+              operation.</td>
+            <td>n/a</td>
+            <td>Get updated on
+              <strong>collection changes</strong> (e.g. addition, removal of elements)</td>
           </tr>
           <tr>
-            <td>root URI, such as <code>/</code> or <code>/api/v1/</code></td>
-            <td><strong>List</strong> the URIs and perhaps other details of the service known to the system.</td>
+            <td>service URI, such as
+              <code>/&lt;service&gt;/</code>
+            </td>
+            <td>
+              <strong>List</strong> all elements matching the request (including query parameters).</td>
             <td>n/a</td>
-            <td><strong>Register new service</strong> with the system. The new service's URI is assigned automatically and is returned by the operation.</td>
             <td>n/a</td>
-            <td>Get updated on <strong>collection changes</strong> (e.g. add, delete of elements)</td>
+            <td>
+              <strong>De-Register new service</strong> with the system.
+              <code>&lt;service&gt;</code> has to be accessed by its uuid. (special permissions needed)</td>
+            <td>Get updated on
+              <strong>collection changes</strong> (e.g. addition, removal of elements)</td>
           </tr>
           <tr>
-            <td>service URI, such as <code>/&lt;service&gt;/</code></td>
-            <td><strong>List</strong> the URIs and perhaps other details of the service resources.</td>
-            <td><strong>Create new resource</strong> within the service. The new resource's URI is assigned automatically and is returned by the operation.</td>
+            <td>Resource URI, such as
+              <code>/&lt;service&gt;/&lt;resource&gt;/</code>
+            </td>
+            <td>
+              <strong>List</strong> the URIs and perhaps other details of the collection's members.</td>
+            <td>
+              <strong>Create new element</strong> in collection or simultaneously
+              <strong>change a collecton of elements</strong>. The new element's URI is assigned automatically and is returned by the operation.</td>
             <td>n/a</td>
-            <td><strong>De-Register new service</strong> with the system. <code>&lt;service&gt;</code> has to be accessed by its uuid. (special permissions needed)</td>
-            <td>Get updated on <strong>collection changes</strong> (e.g. add, delete of elements)</td>
+            <td>n/a</td>
+            <td>Get updated on
+              <strong>collection changes</strong> (e.g. addition, removal of elements)</td>
           </tr>
           <tr>
-            <td>Resource URI, such as <code>/&lt;service&gt;/&lt;resource&gt;/</code></td>
-            <td><strong>List</strong> the URIs and perhaps other details of the collection's members.</td>
-            <td><strong>Create new element</strong> in collection or simultaneously <strong>change a collecton of elements</strong>. The new element's URI is assigned automatically and is returned by the operation.</td>
-            <td>n/a</td>
-            <td>n/a</td>
-            <td>Get updated on <strong>collection changes</strong> (e.g. add, delete of elements)</td>
-          </tr>
-          <tr>
-            <td>Element URI, such as <code>/&lt;service&gt;/&lt;resource&gt;/&lt;element&gt;</code></td>
-            <td><strong>Retrieve</strong> a representation of the addressed <strong>member</strong> of the collection, expressed in an appropriate Internet media type.</td>
-            <td><strong>Update element</strong>. The updated element's URI is assigned automatically and is returned by the operation.</td>
-            <td><strong>Create new element</strong> in collection by sending the entire entity. The new element's URI is assigned accordingly.</td>
-            <td><strong>Delete</strong> the referred entity of the collection (or its attributes)</td>
-            <td>Get updated on <strong>element changes</strong> (e.g. playing tracks offset on media player)</td>
+            <td>Element URI, such as
+              <code>/&lt;service&gt;/&lt;resource&gt;/&lt;element&gt;</code>
+            </td>
+            <td>
+              <strong>Retrieve</strong> a representation of the addressed
+              <strong>member</strong> of the collection, expressed in an appropriate Internet media type.</td>
+            <td>
+              <strong>Update element</strong>. The updated element's URI is assigned automatically and is returned by the operation.</td>
+            <td>
+              <strong>Create new element</strong> in collection by sending the entire entity. The new element's URI is assigned accordingly.</td>
+            <td>
+              <strong>Delete</strong> the referred entity of the collection (or its attributes)</td>
+            <td>Get updated on
+              <strong>element changes</strong> (e.g. playing tracks offset on media player)</td>
           </tr>
         </tbody>
       </table>
       <h5 id="head">HEAD</h5>
-      <p>The <code>HEAD</code> method is identical to <code>GET</code> except that the server <strong><em class="rfc2119" title="MUST NOT">MUST NOT</em></strong> return a message-body in the response. The meta information contained in the HTTP headers in response to a HEAD request <em class="rfc2119" title="SHOULD">SHOULD</em> be identical to the information sent in response to a GET request. This method can be used for obtaining meta information about the entity implied by the request without transferring the entity-body itself. The method is often used to obtain information about expiry or existence, specially in cases where cross origin resource sharing (<a href="#CORS">CORS</a>) is needed.</p>
+      <p>The <code>HEAD</code>(see <a href="https://tools.ietf.org/html/rfc7231#section-4.3.2">RFC7231 section 4.3.2</a>) method is identical to <code>GET</code> except that the server <strong>MUST NOT</strong> return a message-body in the response. The meta information contained in the HTTP headers in response to a HEAD request SHOULD be identical to the information sent in response to a GET request. This method can be used for obtaining meta information about the entity implied by the request without transferring the entity-body itself. The method is often used to obtain information about expiry or existence, specially in cases where cross origin resource sharing (<a href="#CORS">CORS</a>) is needed.</p>
       <h5 id="delete">DELETE</h5>
       <p>A client can either delete entire <code>&lt;element&gt;</code>s or just properties on the <code>&lt;element&gt;</code>s properties specified in the <code>$fields</code> query parameters. The mandatory fields <code>id</code>, <code>name</code> and <code>uri</code> can not be deleted. In case of a writable <code>name</code> property on an <code>&lt;element&gt;</code>, a client can reset the name to <code>""</code> by POSTing.</p>
       <h6 id="example-element-deletion">Example element deletion</h6>
       <p>request:</p>
-      <pre><code><code class="hljs http"><span class="hljs-request">DELETE <span class="hljs-string">medialibrary/tracks/01ACEB4B-002D-4060-A8EB-81868BF0BC37</span> HTTP/1.1</span>
-<span class="hljs-attribute">Host</span>: <span class="hljs-string">127.0.0.1:1337</span>
-<span class="hljs-attribute">Connection</span>: <span class="hljs-string">keep-alive</span>
-<span class="hljs-attribute">Accept</span>: <span class="hljs-string">application/json</span>
-<span class="hljs-attribute">User-Agent</span>: <span class="hljs-string">Chrome/34.0.1847.137 Safari/537.36</span>
-<span class="hljs-attribute">Accept-Encoding</span>: <span class="hljs-string">gzip,deflate</span>
-<span class="hljs-attribute">Accept-Language</span>: <span class="hljs-string">en-US,en;q=0.8,de;q=0.6</span></code>
-</code></pre>
-      <p>response:</p>
+      <pre><code><code class="hljs http"><span class="hljs-request">DELETE <span class="hljs-string">/medialibrary/tracks/01aceb4b-002d-4060-a8eb-81868bf0bc37</span> HTTP/1.1</span>
+      <span class="hljs-attribute">Host</span>: <span class="hljs-string">127.0.0.1:1337</span>
+      <span class="hljs-attribute">Connection</span>: <span class="hljs-string">keep-alive</span>
+      <span class="hljs-attribute">Accept</span>: <span class="hljs-string">application/json</span>
+      <span class="hljs-attribute">User-Agent</span>: <span class="hljs-string">Chrome/34.0.1847.137 Safari/537.36</span>
+      <span class="hljs-attribute">Accept-Encoding</span>: <span class="hljs-string">gzip,deflate</span>
+      <span class="hljs-attribute">Accept-Language</span>: <span class="hljs-string">en-US,en;q=0.8,de;q=0.6</span></code>
+      </code></pre><p>response:</p>
       <pre><code><code class="hljs http"><span class="hljs-status">HTTP/1.1 <span class="hljs-number">200</span> OK</span>
-<span class="hljs-attribute">X-Powered-By</span>: <span class="hljs-string">Express</span>
-<span class="hljs-attribute">Vary</span>: <span class="hljs-string">Accept-Encoding</span>
-<span class="hljs-attribute">Content-Type</span>: <span class="hljs-string">application/json; charset=utf-8</span>
-<span class="hljs-attribute">ETag</span>: <span class="hljs-string">"-32550834"</span>
-<span class="hljs-attribute">Content-Encoding</span>: <span class="hljs-string">gzip</span>
-<span class="hljs-attribute">Date</span>: <span class="hljs-string">Tue, 13 Jun 2014 19:47:27 GMT</span>
-<span class="hljs-attribute">Connection</span>: <span class="hljs-string">keep-alive</span>
-<span class="hljs-attribute">Transfer-Encoding</span>: <span class="hljs-string">chunked</span>
-
-<span class="json">
-{
-  "<span class="hljs-attribute">status</span>" : <span class="hljs-value"><span class="hljs-string">"ok"</span>
-</span>}</span></code>
-</code></pre>
-      <h6 id="example-deletion-of-element-properties-artists-and-rating">Example deletion of element properties artists and rating</h6>
+      <span class="hljs-attribute">X-Powered-By</span>: <span class="hljs-string">Express</span>
+      <span class="hljs-attribute">Vary</span>: <span class="hljs-string">Accept-Encoding</span>
+      <span class="hljs-attribute">Content-Type</span>: <span class="hljs-string">application/json; charset=utf-8</span>
+      <span class="hljs-attribute">ETag</span>: <span class="hljs-string">"-32550834"</span>
+      <span class="hljs-attribute">Content-Encoding</span>: <span class="hljs-string">gzip</span>
+      <span class="hljs-attribute">Date</span>: <span class="hljs-string">Tue, 13 Jun 2014 19:47:27 GMT</span>
+      <span class="hljs-attribute">Connection</span>: <span class="hljs-string">keep-alive</span>
+      <span class="hljs-attribute">Transfer-Encoding</span>: <span class="hljs-string">chunked</span>
+      
+      <span class="json">
+      {
+        "<span class="hljs-attribute">status</span>" : <span class="hljs-value"><span class="hljs-string">"ok"</span>
+      </span>}</span></code>
+      </code></pre><h6 id="example-deletion-of-element-properties-artists-and-rating">Example deletion of element properties artists and rating</h6>
       <p>request:</p>
-      <pre><code><code class="hljs http"><span class="hljs-request">DELETE <span class="hljs-string">medialibrary/tracks/01ACEB4B-002D-4060-A8EB-81868BF0BC37?$fields=artists,rating</span> HTTP/1.1</span>
-<span class="hljs-attribute">Host</span>: <span class="hljs-string">127.0.0.1:1337</span>
-<span class="hljs-attribute">Connection</span>: <span class="hljs-string">keep-alive</span>
-<span class="hljs-attribute">Accept</span>: <span class="hljs-string">application/json</span>
-<span class="hljs-attribute">User-Agent</span>: <span class="hljs-string">Chrome/34.0.1847.137 Safari/537.36</span>
-<span class="hljs-attribute">Accept-Encoding</span>: <span class="hljs-string">gzip,deflate</span>
-<span class="hljs-attribute">Accept-Language</span>: <span class="hljs-string">en-US,en;q=0.8,de;q=0.6</span></code>
-</code></pre>
-      <p>response:</p>
+      <pre><code><code class="hljs http"><span class="hljs-request">DELETE <span class="hljs-string">/medialibrary/tracks/01aceb4b-002d-4060-a8eb-81868bf0bc37?$fields=artists,rating</span> HTTP/1.1</span>
+      <span class="hljs-attribute">Host</span>: <span class="hljs-string">127.0.0.1:1337</span>
+      <span class="hljs-attribute">Connection</span>: <span class="hljs-string">keep-alive</span>
+      <span class="hljs-attribute">Accept</span>: <span class="hljs-string">application/json</span>
+      <span class="hljs-attribute">User-Agent</span>: <span class="hljs-string">Chrome/34.0.1847.137 Safari/537.36</span>
+      <span class="hljs-attribute">Accept-Encoding</span>: <span class="hljs-string">gzip,deflate</span>
+      <span class="hljs-attribute">Accept-Language</span>: <span class="hljs-string">en-US,en;q=0.8,de;q=0.6</span></code>
+      </code></pre><p>response:</p>
       <pre><code><code class="hljs http"><span class="hljs-status">HTTP/1.1 <span class="hljs-number">200</span> OK</span>
-<span class="hljs-attribute">X-Powered-By</span>: <span class="hljs-string">Express</span>
-<span class="hljs-attribute">Vary</span>: <span class="hljs-string">Accept-Encoding</span>
-<span class="hljs-attribute">Content-Type</span>: <span class="hljs-string">application/json; charset=utf-8</span>
-<span class="hljs-attribute">ETag</span>: <span class="hljs-string">"-32550834"</span>
-<span class="hljs-attribute">Content-Encoding</span>: <span class="hljs-string">gzip</span>
-<span class="hljs-attribute">Date</span>: <span class="hljs-string">Tue, 13 Jun 2014 19:47:27 GMT</span>
-<span class="hljs-attribute">Connection</span>: <span class="hljs-string">keep-alive</span>
-<span class="hljs-attribute">Transfer-Encoding</span>: <span class="hljs-string">chunked</span>
-
-<span class="json">
-{
-  "<span class="hljs-attribute">status</span>" : <span class="hljs-value"><span class="hljs-string">"ok"</span>
-</span>}</span></code>
-</code></pre>
-      <h5 id="post">POST</h5>
+      <span class="hljs-attribute">X-Powered-By</span>: <span class="hljs-string">Express</span>
+      <span class="hljs-attribute">Vary</span>: <span class="hljs-string">Accept-Encoding</span>
+      <span class="hljs-attribute">Content-Type</span>: <span class="hljs-string">application/json; charset=utf-8</span>
+      <span class="hljs-attribute">ETag</span>: <span class="hljs-string">"-32550834"</span>
+      <span class="hljs-attribute">Content-Encoding</span>: <span class="hljs-string">gzip</span>
+      <span class="hljs-attribute">Date</span>: <span class="hljs-string">Tue, 13 Jun 2014 19:47:27 GMT</span>
+      <span class="hljs-attribute">Connection</span>: <span class="hljs-string">keep-alive</span>
+      <span class="hljs-attribute">Transfer-Encoding</span>: <span class="hljs-string">chunked</span>
+      
+      <span class="json">
+      {
+        "<span class="hljs-attribute">status</span>" : <span class="hljs-value"><span class="hljs-string">"ok"</span>
+      </span>}</span></code>
+      </code></pre><h5 id="post">POST</h5>
       <p>Creating or changing an entity should always be done in the most condensed way (one request) possible, except the client explicitly wants to execute a sequence.</p>
       <p>Creating e.g. an element is possible by providing no additional information in some cases and later in time modifying the newly created element to the desired state is possible. Nevertheless, providing all known information with the initial request ensures object integrity and minimum network traffic at the same time.</p>
       <p>Changing an element's properties subsequently may cause unwanted effects like flickering in the maprenderer's case or jumps in the mediarenderer's case.</p>
-      <p>The protocol is based on the <strong>last-wins</strong> principal, i.e. last update arriving at the server determines the final state, disregarding the actual time gap between arrival of two subsequent requests.</p>
-      <h5 id="post-to-change-a-collection-of-elements">POST to change a collection of elements</h5>
-      <p>In order to allow simultaneous updates on different elements, combining query parameters as known from a <code>GET</code> request with a <code>POST</code> query on <code>&lt;resource&gt;</code> is used. The idea behind is that a query will select a sub-collection (filter) of the <code>&lt;resource&gt;</code>s elements for which the <code>POST</code> action shall be applied. This is particulary useful, for multi-element-transactions such as setting the color of multiple lights simultaneously. The request will only return a success if all changes were applied successfully, it will fail and return an appropriate code otherwise.</p>
-    <h5 id="light-decoration-example">Light decoration example</h5>
-    <p>Assuming a desire to change the light color of LEDs simultaneously for two decoration elements with the ids 0dde0b53-b862-44ec-bab2-045c049d220c and 1ca1b74-da9a-4933-baa5-1d6f0669dad0, a combined request would be sent instead of two subsequent ones.</p>
-
+      <p>The protocol is based on the <strong>last-wins</strong> principle, i.e. last update arriving at the server determines the final state, disregarding the actual time gap between arrival of two subsequent requests.</p>
+      <h5 id="delete-collection-of-elements">DELETE collection of elements</h5>
+      <p>In order to allow simultaneous deletion of different elements, combining query parameters as known from a <code>GET</code> request with a <code>DELETE</code> query on <code>&lt;resource&gt;</code> is used. The idea behind is that a query will select a sub-collection (filter) of the <code>&lt;resource&gt;</code>s elements for which the <code>DELETE</code> action shall be applied. The request will only return a success if all deletions were successful, it will fail and return an appropriate code otherwise.</p>
       <p>request:</p>
-      <pre><code><code class="hljs http"><span class="hljs-request">GET <span class="hljs-string">dashboard/decoration/?id=0dde0b53-b862-44ec-bab2-045c049d220c,1ca1b74-da9a-4933-baa5-1d6f0669dad0</span> HTTP/1.1</span>
-<span class="hljs-attribute">Host</span>: <span class="hljs-string">127.0.0.1:1337</span>
-<span class="hljs-attribute">Connection</span>: <span class="hljs-string">keep-alive</span>
-<span class="hljs-attribute">Accept</span>: <span class="hljs-string">application/json</span>
-<span class="hljs-attribute">User-Agent</span>: <span class="hljs-string">Chrome/34.0.1847.137 Safari/537.36</span>
-<span class="hljs-attribute">Accept-Encoding</span>: <span class="hljs-string">gzip,deflate</span>
-<span class="hljs-attribute">Accept-Language</span>: <span class="hljs-string">en-US,en;q=0.8,de;q=0.6</span>
-
-<span class="json">
-{
-  "<span class="hljs-attribute">color</span>": <span class="hljs-value"><span class="hljs-string">"blue"</span>
-</span>}</span></code>
-</code></pre>
-      <p>response:</p>
+      <pre><code><code class="hljs http"><span class="hljs-request">DELETE <span class="hljs-string">/addressbook/contacts/?id=34a96130-4beb-47ed-b5e5-5a835907e0eb,2fb85b19-6eb6-49c1-87c5-dcb987aa23d6</span> HTTP/1.1</span>
+      <span class="hljs-attribute">Host</span>: <span class="hljs-string">127.0.0.1:1337</span>
+      <span class="hljs-attribute">Accept</span>: <span class="hljs-string">application/json</span>
+      <span class="hljs-attribute">Accept-Encoding</span>: <span class="hljs-string">gzip,deflate</span></code>
+      </code></pre><p>response:</p>
       <pre><code><code class="hljs http"><span class="hljs-status">HTTP/1.1 <span class="hljs-number">200</span> OK</span>
-<span class="hljs-attribute">X-Powered-By</span>: <span class="hljs-string">Express</span>
-<span class="hljs-attribute">Vary</span>: <span class="hljs-string">Accept-Encoding</span>
-<span class="hljs-attribute">Content-Type</span>: <span class="hljs-string">application/json; charset=utf-8</span>
-<span class="hljs-attribute">ETag</span>: <span class="hljs-string">"-32550834"</span>
-<span class="hljs-attribute">Content-Encoding</span>: <span class="hljs-string">gzip</span>
-<span class="hljs-attribute">Date</span>: <span class="hljs-string">Tue, 13 Jun 2014 19:47:27 GMT</span>
-<span class="hljs-attribute">Connection</span>: <span class="hljs-string">keep-alive</span>
-<span class="hljs-attribute">Transfer-Encoding</span>: <span class="hljs-string">chunked</span>
-
-<span class="json">
-{
-  "<span class="hljs-attribute">status</span>" : <span class="hljs-value"><span class="hljs-string">"ok"</span>
-</span>}</span></code>
-</code></pre>
-      <h4 id="-a-name-caching-a-caching">
-        <a id="caching"></a>Caching</h4>
+      <span class="hljs-attribute">Vary</span>: <span class="hljs-string">Accept-Encoding</span>
+      <span class="hljs-attribute">Content-Type</span>: <span class="hljs-string">application/json; charset=utf-8</span>
+      <span class="hljs-attribute">Content-Encoding</span>: <span class="hljs-string">gzip</span>
+      
+      <span class="json">
+      {
+        "<span class="hljs-attribute">status</span>" : <span class="hljs-value"><span class="hljs-string">"ok"</span>
+      </span>}</span></code>
+      </code></pre><h5 id="post-to-change-a-collection-of-elements">POST to change a collection of elements</h5>
+      <p>In order to allow simultaneous updates on different elements, combining query parameters as known from a <code>GET</code> request with a <code>POST</code> query on <code>&lt;resource&gt;</code> is used. The idea behind is that a query will select a sub-collection (filter) of the <code>&lt;resource&gt;</code>s elements for which the <code>POST</code> action shall be applied. This is particularly useful for multi-element-transactions such as setting the color of multiple lights simultaneously. The request will only return a success if all changes were applied successfully, it will fail and return an appropriate code otherwise.</p>
+      <h6 id="light-decoration-example">Light decoration example</h6>
+      <p>Assuming a desire to change the light color of LEDs simultaneously for two decoration elements with the ids 0dde0b53-b862-44ec-bab2-045c049d220c and 1ca1b74-da9a-4933-baa5-1d6f0669dad0, a combined request would be sent instead of two subsequent ones.</p>
+      <p>request:</p>
+      <pre><code><code class="hljs http"><span class="hljs-request">POST <span class="hljs-string">/dashboard/decoration/?id=0dde0b53-b862-44ec-bab2-045c049d220c,1ca1b74-da9a-4933-baa5-1d6f0669dad0</span> HTTP/1.1</span>
+      <span class="hljs-attribute">Host</span>: <span class="hljs-string">127.0.0.1:1337</span>
+      <span class="hljs-attribute">Accept</span>: <span class="hljs-string">application/json</span>
+      <span class="hljs-attribute">Accept-Encoding</span>: <span class="hljs-string">gzip,deflate</span>
+      
+      <span class="json">
+      {
+        "<span class="hljs-attribute">color</span>": <span class="hljs-value"><span class="hljs-string">"blue"</span>
+      </span>}</span></code>
+      </code></pre><p>response:</p>
+      <pre><code><code class="hljs http"><span class="hljs-status">HTTP/1.1 <span class="hljs-number">200</span> OK</span>
+      <span class="hljs-attribute">Vary</span>: <span class="hljs-string">Accept-Encoding</span>
+      <span class="hljs-attribute">Content-Type</span>: <span class="hljs-string">application/json; charset=utf-8</span>
+      <span class="hljs-attribute">Content-Encoding</span>: <span class="hljs-string">gzip</span>
+      
+      <span class="json">
+      {
+        "<span class="hljs-attribute">status</span>" : <span class="hljs-value"><span class="hljs-string">"ok"</span>
+      </span>}</span></code>
+      </code></pre><h4 id="-a-name-caching-a-caching"><a name="caching"></a>Caching</h4>
       <p>Cache control is established by using HTTP headers <code>ETag</code> and <code>If-None-Match</code> (cmp. <a href="https://tools.ietf.org/html/rfc7232#section-2.3">RFC 7232-2.3</a>). Mainly used for web cache validation, a client can make conditional requests based on the response. This allows caches to be more efficient, saves bandwidth and avoid cache-sync problems as a service does not need to send a full response if the content has not changed and a client can use the cached information. This also applies to service-service communication, especially when service <code>A</code> references element owned by service <code>B</code>. <code>A</code> will act as a client and use its own cached information if no changes where detected by <code>B</code>.</p>
-      <p>The basic sequence is: First: ask for an entity</p>
+      <p>The basic sequence is:
+      First: ask for an entity</p>
       <p>request:</p>
-      <pre><code><code class="hljs http"><span class="hljs-request">GET <span class="hljs-string">cdn/images/foo.png</span> HTTP/1.1</span>
-<span class="hljs-attribute">Host</span>: <span class="hljs-string">127.0.0.1:1337</span>
-<span class="hljs-attribute">Connection</span>: <span class="hljs-string">keep-alive</span>
-<span class="hljs-attribute">Accept</span>: <span class="hljs-string">image/*</span>
-<span class="hljs-attribute">User-Agent</span>: <span class="hljs-string">Chrome/34.0.1847.137 Safari/537.36</span>
-<span class="hljs-attribute">Accept-Encoding</span>: <span class="hljs-string">gzip,deflate</span>
-<span class="hljs-attribute">Accept-Language</span>: <span class="hljs-string">en-US,en;q=0.8,de;q=0.6</span></code>
-</code></pre>
-      <p>response:</p>
+      <pre><code><code class="hljs http"><span class="hljs-request">GET <span class="hljs-string">/cdn/images/foo.png</span> HTTP/1.1</span>
+      <span class="hljs-attribute">Host</span>: <span class="hljs-string">127.0.0.1:1337</span>
+      <span class="hljs-attribute">Connection</span>: <span class="hljs-string">keep-alive</span>
+      <span class="hljs-attribute">Accept</span>: <span class="hljs-string">image/*</span>
+      <span class="hljs-attribute">User-Agent</span>: <span class="hljs-string">Chrome/34.0.1847.137 Safari/537.36</span>
+      <span class="hljs-attribute">Accept-Encoding</span>: <span class="hljs-string">gzip,deflate</span>
+      <span class="hljs-attribute">Accept-Language</span>: <span class="hljs-string">en-US,en;q=0.8,de;q=0.6</span></code>
+      </code></pre><p>response:</p>
       <pre><code><code class="hljs http"><span class="hljs-status">HTTP/1.1 <span class="hljs-number">200</span> OK</span>
-<span class="hljs-attribute">Content-Type</span>: <span class="hljs-string">image/png</span>
-<span class="hljs-attribute">ETag</span>: <span class="hljs-string">"641abf"</span>
-<span class="hljs-attribute">Content-Encoding</span>: <span class="hljs-string">gzip</span>
-<span class="hljs-attribute">Date</span>: <span class="hljs-string">Tue, 13 Jun 2014 19:47:27 GMT</span>
-<span class="hljs-attribute">Connection</span>: <span class="hljs-string">keep-alive</span>
-<span class="hljs-attribute">Transfer-Encoding</span>: <span class="hljs-string">chunked</span>
-<span class="hljs-attribute">Content-Length</span>: <span class="hljs-string">15360</span>
-
-<span class="apache">
-<span class="hljs-tag">&lt;base64encodedfile&gt;</span></span></code>
-</code></pre>
-      <p>The client uses the content delivered with the response, stores the <code>ETag</code> info with the entity in its cache.</p>
+      <span class="hljs-attribute">Content-Type</span>: <span class="hljs-string">image/png</span>
+      <span class="hljs-attribute">ETag</span>: <span class="hljs-string">"641abf"</span>
+      <span class="hljs-attribute">Content-Encoding</span>: <span class="hljs-string">gzip</span>
+      <span class="hljs-attribute">Date</span>: <span class="hljs-string">Tue, 13 Jun 2014 19:47:27 GMT</span>
+      <span class="hljs-attribute">Connection</span>: <span class="hljs-string">keep-alive</span>
+      <span class="hljs-attribute">Transfer-Encoding</span>: <span class="hljs-string">chunked</span>
+      <span class="hljs-attribute">Content-Length</span>: <span class="hljs-string">15360</span>
+      
+      <span class="apache">
+      <span class="hljs-tag">&lt;base64encodedfile&gt;</span></span></code>
+      </code></pre><p>The client uses the content delivered with the response, stores the <code>ETag</code> info with the entity in its cache.</p>
       <p>Second: later ask for the same entity together with <code>If-None-Match</code></p>
-      <pre><code><code class="hljs http"><span class="hljs-request">GET <span class="hljs-string">cdn/images/foo.png</span> HTTP/1.1</span>
-<span class="hljs-attribute">Host</span>: <span class="hljs-string">127.0.0.1:1337</span>
-<span class="hljs-attribute">Connection</span>: <span class="hljs-string">keep-alive</span>
-<span class="hljs-attribute">If-None-Match</span>: <span class="hljs-string">"641abf"</span>
-<span class="hljs-attribute">Accept</span>: <span class="hljs-string">image/*</span>
-<span class="hljs-attribute">User-Agent</span>: <span class="hljs-string">Chrome/34.0.1847.137 Safari/537.36</span>
-<span class="hljs-attribute">Accept-Encoding</span>: <span class="hljs-string">gzip,deflate</span>
-<span class="hljs-attribute">Accept-Language</span>: <span class="hljs-string">en-US,en;q=0.8,de;q=0.6</span></code>
-</code></pre>
-      <p>response:</p>
+      <pre><code><code class="hljs http"><span class="hljs-request">GET <span class="hljs-string">/cdn/images/foo.png</span> HTTP/1.1</span>
+      <span class="hljs-attribute">Host</span>: <span class="hljs-string">127.0.0.1:1337</span>
+      <span class="hljs-attribute">Connection</span>: <span class="hljs-string">keep-alive</span>
+      <span class="hljs-attribute">If-None-Match</span>: <span class="hljs-string">"641abf"</span>
+      <span class="hljs-attribute">Accept</span>: <span class="hljs-string">image/*</span>
+      <span class="hljs-attribute">User-Agent</span>: <span class="hljs-string">Chrome/34.0.1847.137 Safari/537.36</span>
+      <span class="hljs-attribute">Accept-Encoding</span>: <span class="hljs-string">gzip,deflate</span>
+      <span class="hljs-attribute">Accept-Language</span>: <span class="hljs-string">en-US,en;q=0.8,de;q=0.6</span></code>
+      </code></pre><p>response:</p>
       <pre><code><code class="hljs http"><span class="hljs-status">HTTP/1.1 <span class="hljs-number">304</span> Not Modified</span>
-<span class="hljs-attribute">Content-Type</span>: <span class="hljs-string">image/png</span>
-<span class="hljs-attribute">ETag</span>: <span class="hljs-string">"641abf"</span>
-<span class="hljs-attribute">Content-Encoding</span>: <span class="hljs-string">gzip</span>
-<span class="hljs-attribute">Date</span>: <span class="hljs-string">Tue, 13 Jun 2014 21:47:27 GMT</span>
-<span class="hljs-attribute">Connection</span>: <span class="hljs-string">keep-alive</span>
-<span class="hljs-attribute">Transfer-Encoding</span>: <span class="hljs-string">chunked</span>
-<span class="hljs-attribute">Content-Length</span>: <span class="hljs-string">0</span></code>
-</code></pre>
-      <p>The client uses the information from its cache, 0 bytes of payload were transfered.</p>
+      <span class="hljs-attribute">Content-Type</span>: <span class="hljs-string">image/png</span>
+      <span class="hljs-attribute">ETag</span>: <span class="hljs-string">"641abf"</span>
+      <span class="hljs-attribute">Content-Encoding</span>: <span class="hljs-string">gzip</span>
+      <span class="hljs-attribute">Date</span>: <span class="hljs-string">Tue, 13 Jun 2014 21:47:27 GMT</span>
+      <span class="hljs-attribute">Connection</span>: <span class="hljs-string">keep-alive</span>
+      <span class="hljs-attribute">Transfer-Encoding</span>: <span class="hljs-string">chunked</span>
+      <span class="hljs-attribute">Content-Length</span>: <span class="hljs-string">0</span></code>
+      </code></pre><p>The client uses the information from its cache, 0 bytes of payload were transfered.</p>
       <h3 id="and-vs-or-queries">AND vs. OR queries</h3>
       <p>Queries are treated as OR queries per query parameter, i.e. <code>GET /api/v1/&lt;service&gt;/&lt;resource&gt;/?name=foo,bar</code> will retrieve all elements whose names equals 'foo' <strong>OR</strong> 'bar'. Using multiple query parameters on the other hand is treated as an <strong>AND</strong> query, e.g. <code>GET /api/v1/&lt;service&gt;/&lt;resource&gt;/?name=foo&amp;type=bar</code> retrieves all elements named 'foo', being of type 'bar'. To obtain elements by OR queries over multiple query parameters, multiple queries are needed to be made and being combined by the client. This also applies to <code>$expand</code>, <code>$fields</code> etc.
-          <code>GET /api/v1/&lt;service&gt;/&lt;resource&gt;/?$expand=foo,bar</code> reads like 'please expand the properties whose name is either foo <strong>OR</strong> bar'. <code>GET /api/v1/&lt;service&gt;/&lt;resource&gt;/?name=foo,bar</code> reads like 'give me only those properties whose name is either foo <strong>OR</strong> bar'.</p>
-      <h3 id="-a-name-addressingaspects-a-adressing-aspects">
-        <a id="addressingaspects"></a>Adressing aspects</h3>
-      <h4 id="unified-resource-identifier-uri-">unified resource identifier (<code>uri</code>)</h4>
-      <p>The system uses <code>uri</code>s to reference to entities from and to each other. There are to types of <code>uri</code>s, absolute (e.g. <code>https://127.0.0.1:1337/cdn/images/image001.jpg</code>) and relative (e.g. <code>/cdn/images/image001.jpg</code>). All <code>uri</code>s are absolute by default, only if a service is referencing to information that is available under the same host and port, the <code>uri</code> will be relative. All clients have to send the HTTP <code>Host</code> header when accessing a service. The service will use the information provided by the HTTP <code>Host</code> header to build the absolute <code>uri</code>s. This means that an external client will get <code>uri</code>s based on the external IP address or hostname and port number of the service it is talking to.</p>
-      <h3 id="-a-name-cors-a-cross-origin-resource-sharing-cors-">
-        <a id="cors"></a>Cross-origin resource sharing (CORS)</h3>
+      <code>GET /api/v1/&lt;service&gt;/&lt;resource&gt;/?$expand=foo,bar</code> reads like 'please expand the properties whose name is either foo <strong>OR</strong> bar'. <code>GET /api/v1/&lt;service&gt;/&lt;resource&gt;/?name=foo,bar</code> reads like 'give me only those properties whose name is either foo <strong>OR</strong> bar'.</p>
+      <h3 id="-a-name-addressingaspects-a-addressing-aspects"><a name="addressingaspects"></a>Addressing aspects</h3>
+      <p>The system uses unified resource identifiers (<code>uri</code>s) to reference to entities from and to each other. There are to types of <code>uri</code>s, absolute (e.g. <code>https://127.0.0.1:1337/cdn/images/image001.jpg</code>) and relative (e.g. <code>/cdn/images/image001.jpg</code>). All <code>uri</code>s are absolute by default, only if a service is referencing to information that is available under the same host and port, the <code>uri</code> will be relative. All clients have to send the HTTP <code>Host</code> header when accessing a service. The service will use the information provided by the HTTP <code>Host</code> header to build the absolute <code>uri</code>s. This means that an external client will get <code>uri</code>s based on the external IP address or hostname and port number of the service it is talking to.</p>
+      <h3 id="-a-name-cors-a-cross-origin-resource-sharing-cors-"><a name="cors"></a>Cross-origin resource sharing (CORS)</h3>
       <p>Cross-origin resource sharing (CORS) is a mechanism that allows restricted resources (e.g. fonts, JavaScript, etc.) on a web page to be requested from another domain outside the domain from which the resource originated.</p>
       <p>A web page may freely embed images, stylesheets, scripts, iframes, videos and some plugin content from any other domain. However embedded web fonts and AJAX(XMLHttpRequest) requests have traditionally been limited to accessing the same domain as the parent web page (as per the same-origin security policy). "Cross-domain" AJAX requests are forbidden by default because of their ability to perform advanced requests (POST, PUT, DELETE and other types of HTTP requests, along with specifying custom HTTP headers) that introduce many cross-site scripting security issues.</p>
-      <p>CORS defines a way in which a browser and server can interact to safely determine whether or not to allow the cross-origin request. It allows for more freedom and functionality than purely same-origin requests, but is more secure than simply allowing all cross-origin requests. It is a recommended standard of the <abbr title="World Wide Web Consortium">W3C</abbr>.</p>
-      <p>Source: <a href="https://en.wikipedia.org/wiki/Cross-origin_resource_sharing">https://en.wikipedia.org/wiki/Cross-origin_resource_sharing</a> Web Server requirements:</p>
+      <p>CORS defines a way in which a browser and server can interact to safely determine whether or not to allow the cross-origin request. It allows for more freedom and functionality than purely same-origin requests, but is more secure than simply allowing all cross-origin requests. It is a recommended standard of the W3C.</p>
+      <p>To allow clients (e.g. browsers) which are following these guidelines access to the service, the service must use CORS.</p>
+      <p>Source: <a href="https://en.wikipedia.org/wiki/Cross-origin_resource_sharing">https://en.wikipedia.org/wiki/Cross-origin_resource_sharing</a>
+      Web Server requirements:</p>
       <ul>
-        <li>The server shall be configured to allow CORS (<a href="http://www.w3.org/TR/cors/">http://www.w3.org/TR/cors/</a>) during development phase</li>
-        <li>The server shall send the CORS header Access-Control-Allow-Origin * during development phase</li>
-        <li>The server shall send the CORS header Access-Control-Expose-Headers 'location' during development phase</li>
-        <li>The server shall send the CORS header Access-Control-Allow-Credentials during development phase</li>
+      <li>The server must be configured to allow CORS (<a href="http://www.w3.org/TR/cors/">http://www.w3.org/TR/cors/</a>)</li>
+      <li>The server must send the CORS header Access-Control-Allow-Origin *</li>
+      <li>The server must send the CORS header Access-Control-Expose-Headers 'location'</li>
+      <li>The server must send the CORS header Access-Control-Allow-Credentials</li>
+      <li>The server must send the CORS header Access-Control-Allow-Methods: GET,HEAD,PUT,PATCH,POST,DELETE</li>
+      <li>The server must send the CORS header Access-Control-Allow-Headers: and use as its value the headers it received in the request header Access-Control-Request-Headers:</li>
       </ul>
       <h3 id="request-response-content">Request response content</h3>
       <p>The response is always of contentType: <code>application/json</code> (or <code>application/vnd.viwi.v&lt;major&gt;.&lt;minor&gt;.&lt;patch&gt;+json</code>) with <code>charset=UTF-8</code>, expect for binary content. Binary content uses regular HTTP headers according to its MIME-type.</p>
       <p>POST requests only accept payload in the body, no form encoded (HEADER) data is accepted.</p>
       <h3 id="graph-interface">Graph interface</h3>
-      <p>A fundamental concept of the API is the graph. All objects can get into relation with each other. The objects can be understood as nodes in a graph while the relations between them are the edges in this graph. This relation is expressed by referencing from one object to another in the object structure. For example, a 'media renderer' (node) may 'have' (edge) a 'mediaCollection' (node). The 'mediaCollection' (node) itself may 'contain' (edge) multiple items like a 'track' (node) or a 'video' (node).</p>
+      <p>A fundamental concept of the API is the graph. All objects can get into relation with each other. The objects
+      can be understood as nodes in a graph while the relations between them are the edges in this graph. This relation is expressed by referencing from one object to another in the object structure. For example, a 'media
+      renderer' (node) may 'have' (edge) a 'mediaCollection' (node). The 'mediaCollection' (node) itself may
+      'contain' (edge) multiple items like a 'track' (node) or a 'video' (node).</p>
       <p><img src="img/graph1.png" alt="Graph API"></p>
       <h3 id="response-filtering">Response filtering</h3>
       <h4 id="reserved-query-parameters">Reserved query parameters</h4>
       <p>An API-query or subscription can contain none, one or multiple parameters that represent the desire to filter a query. All parameters that do not point to an object property, but have a general nature, are prefixed with $. The following paragraphs make use of this rule and give examples.</p>
       <h4 id="resource-search">Resource search</h4>
-      <p>A search can be performed on any resource, as either freetext search, parameter search or a combination of both. The parameter search is performed by using request parameters according to the properties of the resources object. The request parameters name has to resemble the objects property name, while its value is the search key. The character "%" (URL encoded: %25) is used as wildcard and can be used anywhere in the search key. It is possible to combine multiple request parameters in a single search, while combining multiple search keys in a single request is not supported. Thus, a search query always returns the result of an <code>AND</code> query. <code>http://127.0.0.1:1337/medialibrary/tracks/?$q=5&amp;artists=CB4E5462-1DDF-46C1-9B9D-45D6008A1989</code> reads as 'fetch all tracks from the medialibrary that have any property set to 5 AND the the artists property contains CB4E5462-1DDF-46C1-9B9D-45D6008A1989'. To perform an <code>OR</code> query, multiple query have to be combined on client side.</p>
+      <p>A search can be performed on any resource, as either freetext search, parameter search or a combination of both. The parameter search is performed by using request parameters according to the properties of the resources object. The request parameters name has to resemble the objects property name, while its value is the search key. The character "%" (URL encoded: %25) is used as wildcard and can be used anywhere in the search key. Searches are only possible on properties which reference an XObject or primitive or arrays of those (i.e. searches are not possible on properties that are inlined objects). It is possible to combine multiple request parameters in a single search, while combining multiple search keys in a single request is not supported. Thus, a search query always returns the result of an <code>AND</code> query. <code>http://127.0.0.1:1337/medialibrary/tracks/?$q=5&amp;artists=cb4e5462-1ddf-46c1-9b9d-45d6008a1989</code> reads as 'fetch all tracks from the medialibrary that have any property set to 5 AND the the artists property contains cb4e5462-1ddf-46c1-9b9d-45d6008a1989'.
+      To perform an <code>OR</code> query, multiple query have to be combined on client side.</p>
       <h5 id="property-search">Property search</h5>
       <p>request:</p>
-      <pre><code><code class="hljs http"><span class="hljs-request">GET <span class="hljs-string">medialibrary/tracks/?rating=5</span> HTTP/1.1</span>
-<span class="hljs-attribute">Host</span>: <span class="hljs-string">127.0.0.1:1337</span>
-<span class="hljs-attribute">Connection</span>: <span class="hljs-string">keep-alive</span>
-<span class="hljs-attribute">Accept</span>: <span class="hljs-string">application/json</span>
-<span class="hljs-attribute">User-Agent</span>: <span class="hljs-string">Chrome/34.0.1847.137 Safari/537.36</span>
-<span class="hljs-attribute">Accept-Encoding</span>: <span class="hljs-string">gzip,deflate</span>
-<span class="hljs-attribute">Accept-Language</span>: <span class="hljs-string">en-US,en;q=0.8,de;q=0.6</span></code>
-</code></pre>
-      <p>response:</p>
+      <pre><code><code class="hljs http"><span class="hljs-request">GET <span class="hljs-string">/medialibrary/tracks/?rating=5</span> HTTP/1.1</span>
+      <span class="hljs-attribute">Host</span>: <span class="hljs-string">127.0.0.1:1337</span>
+      <span class="hljs-attribute">Connection</span>: <span class="hljs-string">keep-alive</span>
+      <span class="hljs-attribute">Accept</span>: <span class="hljs-string">application/json</span>
+      <span class="hljs-attribute">User-Agent</span>: <span class="hljs-string">Chrome/34.0.1847.137 Safari/537.36</span>
+      <span class="hljs-attribute">Accept-Encoding</span>: <span class="hljs-string">gzip,deflate</span>
+      <span class="hljs-attribute">Accept-Language</span>: <span class="hljs-string">en-US,en;q=0.8,de;q=0.6</span></code>
+      </code></pre><p>response:</p>
       <pre><code><code class="hljs http"><span class="hljs-status">HTTP/1.1 <span class="hljs-number">200</span> OK</span>
 <span class="hljs-attribute">X-Powered-By</span>: <span class="hljs-string">Express</span>
 <span class="hljs-attribute">Vary</span>: <span class="hljs-string">Accept-Encoding</span>
@@ -1152,15 +1137,14 @@ github.com style (c) Vasily Polovnyov <vast@whiteants.net>
       <p>A freetext search is performed by using the request parameter <code>$q</code>. The search key will be tested against any property value. Freetext search also supports wildcard character "%" (URL encoded: %25).</p>
       <h5 id="example-freetext">Example freetext</h5>
       <p>request:</p>
-      <pre><code><code class="hljs http"><span class="hljs-request">GET <span class="hljs-string">medialibrary/tracks/?$q=me%20and%20my%20empty%20wallet</span> HTTP/1.1</span>
-<span class="hljs-attribute">Host</span>: <span class="hljs-string">127.0.0.1:1337</span>
-<span class="hljs-attribute">Connection</span>: <span class="hljs-string">keep-alive</span>
-<span class="hljs-attribute">Accept</span>: <span class="hljs-string">application/json</span>
-<span class="hljs-attribute">User-Agent</span>: <span class="hljs-string">Chrome/34.0.1847.137 Safari/537.36</span>
-<span class="hljs-attribute">Accept-Encoding</span>: <span class="hljs-string">gzip,deflate</span>
-<span class="hljs-attribute">Accept-Language</span>: <span class="hljs-string">en-US,en;q=0.8,de;q=0.6</span></code>
-</code></pre>
-      <p>response:</p>
+      <pre><code><code class="hljs http"><span class="hljs-request">GET <span class="hljs-string">/medialibrary/tracks/?$q=me%20and%20my%20empty%20wallet</span> HTTP/1.1</span>
+      <span class="hljs-attribute">Host</span>: <span class="hljs-string">127.0.0.1:1337</span>
+      <span class="hljs-attribute">Connection</span>: <span class="hljs-string">keep-alive</span>
+      <span class="hljs-attribute">Accept</span>: <span class="hljs-string">application/json</span>
+      <span class="hljs-attribute">User-Agent</span>: <span class="hljs-string">Chrome/34.0.1847.137 Safari/537.36</span>
+      <span class="hljs-attribute">Accept-Encoding</span>: <span class="hljs-string">gzip,deflate</span>
+      <span class="hljs-attribute">Accept-Language</span>: <span class="hljs-string">en-US,en;q=0.8,de;q=0.6</span></code>
+      </code></pre><p>response:</p>
       <pre><code><code class="hljs http"><span class="hljs-status">HTTP/1.1 <span class="hljs-number">200</span> OK</span>
 <span class="hljs-attribute">X-Powered-By</span>: <span class="hljs-string">Express</span>
 <span class="hljs-attribute">Vary</span>: <span class="hljs-string">Accept-Encoding</span>
@@ -1210,15 +1194,14 @@ github.com style (c) Vasily Polovnyov <vast@whiteants.net>
       <h5 id="referenced-object">Referenced object</h5>
       <p>To search for a linked object, use its <code>&lt;uuid&gt;</code> as search value on the search key of its property name.</p>
       <p>request:</p>
-      <pre><code><code class="hljs http"><span class="hljs-request">GET <span class="hljs-string">medialibrary/tracks/?artists=bb3372f0-b527-11e3-a5e2-0800200c9a66</span> HTTP/1.1</span>
-<span class="hljs-attribute">Host</span>: <span class="hljs-string">127.0.0.1:1337</span>
-<span class="hljs-attribute">Connection</span>: <span class="hljs-string">keep-alive</span>
-<span class="hljs-attribute">Accept</span>: <span class="hljs-string">application/json</span>
-<span class="hljs-attribute">User-Agent</span>: <span class="hljs-string">Chrome/34.0.1847.137 Safari/537.36</span>
-<span class="hljs-attribute">Accept-Encoding</span>: <span class="hljs-string">gzip,deflate</span>
-<span class="hljs-attribute">Accept-Language</span>: <span class="hljs-string">en-US,en;q=0.8,de;q=0.6</span></code>
-</code></pre>
-      <p>response:</p>
+      <pre><code><code class="hljs http"><span class="hljs-request">GET <span class="hljs-string">/medialibrary/tracks/?artists=bb3372f0-b527-11e3-a5e2-0800200c9a66</span> HTTP/1.1</span>
+      <span class="hljs-attribute">Host</span>: <span class="hljs-string">127.0.0.1:1337</span>
+      <span class="hljs-attribute">Connection</span>: <span class="hljs-string">keep-alive</span>
+      <span class="hljs-attribute">Accept</span>: <span class="hljs-string">application/json</span>
+      <span class="hljs-attribute">User-Agent</span>: <span class="hljs-string">Chrome/34.0.1847.137 Safari/537.36</span>
+      <span class="hljs-attribute">Accept-Encoding</span>: <span class="hljs-string">gzip,deflate</span>
+      <span class="hljs-attribute">Accept-Language</span>: <span class="hljs-string">en-US,en;q=0.8,de;q=0.6</span></code>
+      </code></pre><p>response:</p>
       <pre><code><code class="hljs http"><span class="hljs-status">HTTP/1.1 <span class="hljs-number">200</span> OK</span>
 <span class="hljs-attribute">X-Powered-By</span>: <span class="hljs-string">Express</span>
 <span class="hljs-attribute">Vary</span>: <span class="hljs-string">Accept-Encoding</span>
@@ -1271,14 +1254,11 @@ github.com style (c) Vasily Polovnyov <vast@whiteants.net>
       <p>Similar to searching, a generic parameter <code>$sortby</code> can be used for <code>GET</code> requests on resource level to describe sorting rules. Accommodate complex sorting requirements by letting the sort parameter take in a list of comma separated fields, each with a possible unary negative to imply descending sort order.</p>
       <p>Every <code>&lt;resource&gt;</code> has a fixed default ordering, i.e. statelessness is given by defining a default sort behavior per <code>&lt;resources&gt;</code>, the <code>$sortby</code> parameter just over-rules the default behavior.</p>
       <pre><code><code class="hljs elixir">  <span class="hljs-symbol">http:</span>/<span class="hljs-regexp">/127.0.0.1:1337/medialibrary</span><span class="hljs-regexp">/tracks/</span>?<span class="hljs-variable">$sortby</span>=rating</code>
-</code></pre>
-      <p>or</p>
+      </code></pre><p>or</p>
       <pre><code><code class="hljs elixir">  <span class="hljs-symbol">http:</span>/<span class="hljs-regexp">/127.0.0.1:1337/medialibrary</span><span class="hljs-regexp">/tracks/</span>?<span class="hljs-variable">$sortby</span>=-rating</code>
-</code></pre>
-      <p>Sorting can be combined with searching by adding both request parameters to the query:</p>
+      </code></pre><p>Sorting can be combined with searching by adding both request parameters to the query:</p>
       <pre><code><code class="hljs perl">  http:<span class="hljs-regexp">//</span><span class="hljs-number">127.0</span>.<span class="hljs-number">0</span>.<span class="hljs-number">1</span>:<span class="hljs-number">1337</span>/medialibrary/tracks/?<span class="hljs-variable">$sortby</span>=rating&amp;name=me<span class="hljs-variable">%20an</span><span class="hljs-variable">%my</span><span class="hljs-variable">%20empty</span><span class="hljs-variable">%20wallet</span></code>
-</code></pre>
-      <h5 id="ordering-by-primitives">Ordering by primitives</h5>
+      </code></pre><h5 id="ordering-by-primitives">Ordering by primitives</h5>
       <p>Ordering by primitive value properties is possible alphabetical an numerical.</p>
       <h5 id="ordering-by-complex-objects">Ordering by complex objects</h5>
       <p>The default ordering by references to complex object is defined by the mandatory <code>name</code> member of the complex object. A service might implement a different behavior that has to be specified per service, if different to the default.</p>
@@ -1291,15 +1271,14 @@ github.com style (c) Vasily Polovnyov <vast@whiteants.net>
       <p>Expansion does only work on JSON payload. If an object references to binary data, like images, expansion does NOT apply. Of course binary data can NOT be embedded into JSON payload and thus can not be expanded.</p>
       <h4 id="no-expansion">No expansion</h4>
       <p>request:</p>
-      <pre><code><code class="hljs http"><span class="hljs-request">GET <span class="hljs-string">medialibrary/albums/6149c270-b528-11e3-a5e2-0800200c9a66</span> HTTP/1.1</span>
-<span class="hljs-attribute">Host</span>: <span class="hljs-string">127.0.0.1:1337</span>
-<span class="hljs-attribute">Connection</span>: <span class="hljs-string">keep-alive</span>
-<span class="hljs-attribute">Accept</span>: <span class="hljs-string">application/json</span>
-<span class="hljs-attribute">User-Agent</span>: <span class="hljs-string">Chrome/34.0.1847.137 Safari/537.36</span>
-<span class="hljs-attribute">Accept-Encoding</span>: <span class="hljs-string">gzip,deflate</span>
-<span class="hljs-attribute">Accept-Language</span>: <span class="hljs-string">en-US,en;q=0.8,de;q=0.6</span></code>
-</code></pre>
-      <p>response:</p>
+      <pre><code><code class="hljs http"><span class="hljs-request">GET <span class="hljs-string">/medialibrary/albums/6149c270-b528-11e3-a5e2-0800200c9a66</span> HTTP/1.1</span>
+      <span class="hljs-attribute">Host</span>: <span class="hljs-string">127.0.0.1:1337</span>
+      <span class="hljs-attribute">Connection</span>: <span class="hljs-string">keep-alive</span>
+      <span class="hljs-attribute">Accept</span>: <span class="hljs-string">application/json</span>
+      <span class="hljs-attribute">User-Agent</span>: <span class="hljs-string">Chrome/34.0.1847.137 Safari/537.36</span>
+      <span class="hljs-attribute">Accept-Encoding</span>: <span class="hljs-string">gzip,deflate</span>
+      <span class="hljs-attribute">Accept-Language</span>: <span class="hljs-string">en-US,en;q=0.8,de;q=0.6</span></code>
+      </code></pre><p>response:</p>
       <pre><code><code class="hljs http"><span class="hljs-status">HTTP/1.1 <span class="hljs-number">200</span> OK</span>
 <span class="hljs-attribute">X-Powered-By</span>: <span class="hljs-string">Express</span>
 <span class="hljs-attribute">Vary</span>: <span class="hljs-string">Accept-Encoding</span>
@@ -1363,15 +1342,14 @@ github.com style (c) Vasily Polovnyov <vast@whiteants.net>
       <h4 id="single-property-expansion">Single property expansion</h4>
       <p>A client might want to expand just a single property on a given element. To achieve single property expansion, a client adds an <code>$expand</code> parameter followed by a comma separated list of property names.</p>
       <p>request:</p>
-      <pre><code><code class="hljs http"><span class="hljs-request">GET <span class="hljs-string">medialibrary/albums/6149c270-b528-11e3-a5e2-0800200c9a66?$expand=artists</span> HTTP/1.1</span>
-<span class="hljs-attribute">Host</span>: <span class="hljs-string">127.0.0.1:1337</span>
-<span class="hljs-attribute">Connection</span>: <span class="hljs-string">keep-alive</span>
-<span class="hljs-attribute">Accept</span>: <span class="hljs-string">application/json</span>
-<span class="hljs-attribute">User-Agent</span>: <span class="hljs-string">Chrome/34.0.1847.137 Safari/537.36</span>
-<span class="hljs-attribute">Accept-Encoding</span>: <span class="hljs-string">gzip,deflate</span>
-<span class="hljs-attribute">Accept-Language</span>: <span class="hljs-string">en-US,en;q=0.8,de;q=0.6</span></code>
-</code></pre>
-      <p>response:</p>
+      <pre><code><code class="hljs http"><span class="hljs-request">GET <span class="hljs-string">/medialibrary/albums/6149c270-b528-11e3-a5e2-0800200c9a66?$expand=artists</span> HTTP/1.1</span>
+      <span class="hljs-attribute">Host</span>: <span class="hljs-string">127.0.0.1:1337</span>
+      <span class="hljs-attribute">Connection</span>: <span class="hljs-string">keep-alive</span>
+      <span class="hljs-attribute">Accept</span>: <span class="hljs-string">application/json</span>
+      <span class="hljs-attribute">User-Agent</span>: <span class="hljs-string">Chrome/34.0.1847.137 Safari/537.36</span>
+      <span class="hljs-attribute">Accept-Encoding</span>: <span class="hljs-string">gzip,deflate</span>
+      <span class="hljs-attribute">Accept-Language</span>: <span class="hljs-string">en-US,en;q=0.8,de;q=0.6</span></code>
+      </code></pre><p>response:</p>
       <pre><code><code class="hljs http"><span class="hljs-status">HTTP/1.1 <span class="hljs-number">200</span> OK</span>
 <span class="hljs-attribute">X-Powered-By</span>: <span class="hljs-string">Express</span>
 <span class="hljs-attribute">Vary</span>: <span class="hljs-string">Accept-Encoding</span>
@@ -1834,7 +1812,7 @@ github.com style (c) Vasily Polovnyov <vast@whiteants.net>
   </span>}
 </span>}</span></code>
 </code></pre>
-      <h4 id="error">Error</h4>
+      <h4 id="-a-name-subscriptionerror-a-error"><a name="subscriptionerror"></a> Error</h4>
       <p>If any error on the server side occurs an object with type ‘error’ is sent. The following JSON format shall be used:</p>
       <pre><code class="lang-json"><code class="hljs json">{
   "<span class="hljs-attribute">type</span>" : <span class="hljs-value"><span class="hljs-string">"error"</span></span>,
@@ -2090,119 +2068,128 @@ d2cb3c92-ad8f-<span class="hljs-number">496f</span>-b463-<span class="hljs-numbe
       <h3 id="schema">Schema</h3>
       <p>All object properties make use JSON Schema definitions <a href="https://tools.ietf.org/html/rfc7159">RFC7159</a>. In addition to the formats defined in RFC7159 the <code>date-time</code>, <code>date</code> and <code>time</code> formats are derived but not identical to the definition in <a href="https://tools.ietf.org/html/rfc3339">RFC3339</a>. APIs may also use the following (proprietary) formats:</p>
       <pre><code><code class="hljs json">{
-  "<span class="hljs-attribute">uuid</span>": <span class="hljs-value">{
-    "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"unique identifier"</span></span>,
-    "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fAF]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"</span></span>,
-    "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"388d3a25-663b-11e3-949a-0800200c9a66"</span>
-  </span>}</span>,
-  "<span class="hljs-attribute">geoposition</span>": <span class="hljs-value">{
-    "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"latitude followed by longitude and altitude in meters separated by ';'"</span></span>,
-    "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^[-+]?[0-9]*\.?[0-9]*;[-+]?[0-9]*\.?[0-9]*;[-+]?[0-9]*\.?[0-9]*$"</span></span>,
-    "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"37.772323;-122.214897;0"</span>
-  </span>}</span>,
-  "<span class="hljs-attribute">e164telephonenumber</span>": <span class="hljs-value">{
-    "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"E.164 encoded Telephone number"</span></span>,
-    "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^\+?\d{4,23}$"</span></span>,
-    "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"+49536190"</span>
-  </span>}</span>,
-  "<span class="hljs-attribute">macaddress</span>": <span class="hljs-value">{
-    "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"device mac address"</span></span>,
-    "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^([0-9A-F]{2}[:-]){5}([0-9A-F]{2})$"</span></span>,
-    "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"a3:3E:ff:e3:01:fe"</span>
-  </span>}</span>,
-  "<span class="hljs-attribute">rgba</span>": <span class="hljs-value">{
-    "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"rgba color with alpha"</span></span>,
-    "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^rgba\((\d{1,3}),\s*(\d{1,3}),\s*(\d{1,3})(?:,\s*(\d(?:\.\d+)?))?\)$"</span></span>,
-    "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"rgba(25,9,19,0.4)"</span>
-  </span>}</span>,
-  "<span class="hljs-attribute">language</span>": <span class="hljs-value">{
-    "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"HTTP1.1 compatible language tag"</span></span>,
-    "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^(\w{2})(-\w*)?$"</span></span>,
-    "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"en-gb"</span>
-  </span>}</span>,
-  "<span class="hljs-attribute">servicecategory</span>": <span class="hljs-value">{
-    "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"plain string category name"</span></span>,
-    "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^[a-z]$"</span></span>,
-    "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"car"</span>
-  </span>}</span>,
-  "<span class="hljs-attribute">duration</span>": <span class="hljs-value">{
-    "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"iso8601 duration"</span></span>,
-    "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^P\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$"</span></span>,
-    "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"P0003-06-04T12:30:05"</span>
-  </span>}</span>,
-  "<span class="hljs-attribute">temperatureUnit</span>": <span class="hljs-value">{
-    "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"temperature measurement unit"</span></span>,
-    "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^[KCF]{1}$"</span></span>,
-    "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"C"</span>
-  </span>}</span>,
-  "<span class="hljs-attribute">distanceUnit</span>": <span class="hljs-value">{
-    "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"distance unit"</span></span>,
-    "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^mi|km|yd|m|ft$"</span></span>,
-    "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"km"</span>
-  </span>}</span>,
-  "<span class="hljs-attribute">pressureUnit</span>": <span class="hljs-value">{
-    "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"pressure measurement unit"</span></span>,
-    "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^bar|psi|kPa$"</span></span>,
-    "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"bar"</span>
-  </span>}</span>,
-  "<span class="hljs-attribute">volumeUnit</span>": <span class="hljs-value">{
-    "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"volume measurement unit (ul = microliter)"</span></span>,
-    "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^l|ml|ul|gal$"</span></span>,
-    "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"ml"</span>
-  </span>}</span>,
-  "<span class="hljs-attribute">consumptionUnit</span>": <span class="hljs-value">{
-    "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"consumption measurement unit (fluid, gas, electric)"</span></span>,
-    "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^l/100km|l/h|km/l|mpgUS|mpgUK|g/h|kg/100km|km/kg|kg/h|m3/100km|km/m3|m3/h|miles/lbs|lbs/h|miles/yard3|yard3/h|miles/kg|miles/m3|kWh/100km|km/kWh|kWh/100miles|miles/kWh|kW|Ws|miles/gal_eqUS$"</span></span>,
-    "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"l/h"</span>
-  </span>}</span>,
-  "<span class="hljs-attribute">weightUnit</span>": <span class="hljs-value">{
-    "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"consumption measurement unit (fluid, gas, electric)"</span></span>,
-    "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^t|kg|g|mg|lbs$"</span></span>,
-    "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"kg"</span>
-  </span>}</span>,
-  "<span class="hljs-attribute">speedUnit</span>": <span class="hljs-value">{
-    "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"speed unit"</span></span>,
-    "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^kmh|mph|m/s$"</span></span>,
-    "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"kmh"</span>
-  </span>}</span>,
-  "<span class="hljs-attribute">timeFormat</span>": <span class="hljs-value">{
-    "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"the time format for clocks"</span></span>,
-    "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^12h|24h$"</span></span>,
-    "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"12h"</span>
-  </span>}</span>,
-  "<span class="hljs-attribute">dateFormat</span>": <span class="hljs-value">{
-    "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"date format"</span></span>,
-    "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^ddmmyyyy|mmddyyyy|yyyymmdd$"</span></span>,
-    "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"mmddyyyy"</span>
-  </span>}</span>,
-  "<span class="hljs-attribute">date-time</span>": <span class="hljs-value">{
-    "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"date-time (based on RFC3339 5.6) detailed fraction"</span></span>,
-    "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?((Z|(\+|\-)\d{2}:\d{2}))$"</span></span>,
-    "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"2005-11-12T12:01:42.123+01:00"</span>
-  </span>}</span>,
-  "<span class="hljs-attribute">time</span>": <span class="hljs-value">{
-    "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"time (based on RFC3339 5.6) detailed fraction"</span></span>,
-    "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^\d{2}:\d{2}:\d{2}(\.\d{3})?((Z|(\+|\-)\d{2}:\d{2}))$"</span></span>,
-    "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"12:01:42.123+01:00"</span>
-  </span>}</span>,
-  "<span class="hljs-attribute">date</span>": <span class="hljs-value">{
-    "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"date (RFC3339 5.6)"</span></span>,
-    "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^\d{4}-\d{2}-\d{2}$"</span></span>,
-    "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"2005-11-12"</span>
-  </span>}</span>,
-  "<span class="hljs-attribute">uri</span>": <span class="hljs-value">{
-    "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"uri with schema http(s) or w/o Authority"</span></span>,
-    "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^(https?:(\/\/([a-z0-9\-._~%]+|\[[a-f0-9:.]+\])(:[0-9]+)?))?(\/[a-z0-9\-._~%!@include("</span>assets/formats.json<span class="hljs-string">")'()*+,;=:@]+)*\/?(\?[a-z0-9\-._~%!@include("</span>assets/formats.json<span class="hljs-string">")'()*+,;=:@\/?]*)?(\#[a-z0-9\-._~%!@include("</span>assets/formats.json<span class="hljs-string">")'()*+,;=:@\/?]*)?$"</span></span>,
-    "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"http://www.example.com/aDocument?foo#bar"</span>
-  </span>}</span>,
-  "<span class="hljs-attribute">ical</span>": <span class="hljs-value">{
-    "<span class="hljs-attribute">description</span>":<span class="hljs-value"><span class="hljs-string">"iCal format defined in https://tools.ietf.org/html/rfc5545"</span></span>,
-    "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^BEGIN:VCALENDAR[\S\s]+END:VCALENDAR$"</span></span>,
-    "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"BEGIN:VCALENDAR  END:VCALENDAR"</span>
-  </span>}
-</span>}</code>
-</code></pre>
-      <p>It is also allowed to define a dedicated regular expression pattern as format on property definition level.</p>
+        "<span class="hljs-attribute">uuid</span>": <span class="hljs-value">{
+          "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"unique identifier"</span></span>,
+          "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"</span></span>,
+          "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"388d3a25-663b-11e3-949a-0800200c9a66"</span>
+        </span>}</span>,
+        "<span class="hljs-attribute">geoposition</span>": <span class="hljs-value">{
+          "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"latitude followed by longitude and altitude in meters separated by ';'"</span></span>,
+          "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^[-+]?[0-9]*\.?[0-9]*;[-+]?[0-9]*\.?[0-9]*;[-+]?[0-9]*\.?[0-9]*$"</span></span>,
+          "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"37.772323;-122.214897;0"</span>
+        </span>}</span>,
+        "<span class="hljs-attribute">e164telephonenumber</span>": <span class="hljs-value">{
+          "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"E.164 encoded Telephone number"</span></span>,
+          "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^\+?\d{4,23}$"</span></span>,
+          "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"+49536190"</span>
+        </span>}</span>,
+        "<span class="hljs-attribute">macaddress</span>": <span class="hljs-value">{
+          "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"device mac address"</span></span>,
+          "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^([0-9A-F]{2}[:-]){5}([0-9A-F]{2})$"</span></span>,
+          "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"a3:3E:ff:e3:01:fe"</span>
+        </span>}</span>,
+        "<span class="hljs-attribute">rgba</span>": <span class="hljs-value">{
+          "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"rgba color with alpha"</span></span>,
+          "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^rgba\((\d{1,3}),\s*(\d{1,3}),\s*(\d{1,3})(?:,\s*(\d(?:\.\d+)?))?\)$"</span></span>,
+          "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"rgba(25,9,19,0.4)"</span>
+        </span>}</span>,
+        "<span class="hljs-attribute">language</span>": <span class="hljs-value">{
+          "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"HTTP1.1 compatible language tag"</span></span>,
+          "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^(\w{2})(-\w*)?$"</span></span>,
+          "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"en-gb"</span>
+        </span>}</span>,
+        "<span class="hljs-attribute">servicecategory</span>": <span class="hljs-value">{
+          "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"plain string category name"</span></span>,
+          "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^[a-z]*$"</span></span>,
+          "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"car"</span>
+        </span>}</span>,
+        "<span class="hljs-attribute">duration</span>": <span class="hljs-value">{
+          "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"iso8601 duration"</span></span>,
+          "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^P\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$"</span></span>,
+          "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"P0003-06-04T12:30:05"</span>
+        </span>}</span>,
+        "<span class="hljs-attribute">temperatureUnit</span>": <span class="hljs-value">{
+          "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"temperature measurement unit"</span></span>,
+          "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^[KCF]{1}$"</span></span>,
+          "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"C"</span>
+        </span>}</span>,
+        "<span class="hljs-attribute">distanceUnit</span>": <span class="hljs-value">{
+          "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"distance unit"</span></span>,
+          "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^mi|km|yd|m|ft$"</span></span>,
+          "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"km"</span>
+        </span>}</span>,
+        "<span class="hljs-attribute">pressureUnit</span>": <span class="hljs-value">{
+          "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"pressure measurement unit"</span></span>,
+          "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^bar|psi|kPa$"</span></span>,
+          "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"bar"</span>
+        </span>}</span>,
+        "<span class="hljs-attribute">volumeUnit</span>": <span class="hljs-value">{
+          "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"volume measurement unit (ul = microliter, us.dry.gal = dry US gallon, us.liq.gal = liquid US gallon, imp.gal = imperial gallon)"</span></span>,
+          "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^l|ml|ul|us.liq.gal|us.dry.gal|imp.gal$"</span></span>,
+          "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"ml"</span>
+        </span>}</span>,
+        "<span class="hljs-attribute">consumptionUnit</span>": <span class="hljs-value">{
+          "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"consumption measurement unit (fluid, gas, electric)"</span></span>,
+          "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^l/100km|l/h|km/l|mpgUS|mpgUK|g/h|kg/100km|km/kg|kg/h|m3/100km|km/m3|m3/h|miles/lbs|lbs/h|miles/yard3|yard3/h|miles/kg|miles/m3|kWh/100km|km/kWh|kWh/100miles|miles/kWh|kW|Ws|miles/gal_eqUS$"</span></span>,
+          "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"l/h"</span>
+        </span>}</span>,
+        "<span class="hljs-attribute">weightUnit</span>": <span class="hljs-value">{
+          "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"consumption measurement unit (fluid, gas, electric)"</span></span>,
+          "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^t|kg|g|mg|lbs$"</span></span>,
+          "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"kg"</span>
+        </span>}</span>,
+        "<span class="hljs-attribute">speedUnit</span>": <span class="hljs-value">{
+          "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"speed unit"</span></span>,
+          "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^kmh|mph|m/s$"</span></span>,
+          "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"kmh"</span>
+        </span>}</span>,
+        "<span class="hljs-attribute">timeFormat</span>": <span class="hljs-value">{
+          "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"the time format for clocks"</span></span>,
+          "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^12h|24h$"</span></span>,
+          "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"12h"</span>
+        </span>}</span>,
+        "<span class="hljs-attribute">dateFormat</span>": <span class="hljs-value">{
+          "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"date format"</span></span>,
+          "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^ddmmyyyy|mmddyyyy|yyyymmdd$"</span></span>,
+          "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"mmddyyyy"</span>
+        </span>}</span>,
+        "<span class="hljs-attribute">date-time</span>": <span class="hljs-value">{
+          "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"date-time (based on RFC3339 5.6) detailed fraction"</span></span>,
+          "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?((Z|(\+|\-)\d{2}:\d{2}))$"</span></span>,
+          "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"2005-11-12T12:01:42.123+01:00"</span>
+        </span>}</span>,
+        "<span class="hljs-attribute">time</span>": <span class="hljs-value">{
+          "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"time (based on RFC3339 5.6) detailed fraction"</span></span>,
+          "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^\d{2}:\d{2}:\d{2}(\.\d{3})?((Z|(\+|\-)\d{2}:\d{2}))$"</span></span>,
+          "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"12:01:42.123+01:00"</span>
+        </span>}</span>,
+        "<span class="hljs-attribute">date</span>": <span class="hljs-value">{
+          "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"date (RFC3339 5.6)"</span></span>,
+          "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^\d{4}-\d{2}-\d{2}$"</span></span>,
+          "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"2005-11-12"</span>
+        </span>}</span>,
+        "<span class="hljs-attribute">uri</span>": <span class="hljs-value">{
+          "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"uri with schema http(s) or w/o Authority"</span></span>,
+          "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"(https?:(\/\/([a-z0-9\-._~%]+|\[[a-f0-9:.]+\])(:[0-9]+)?))?(\/[a-zA-Z0-9\-._~%!&amp;\$'()*+,;=:@]+)*\/?(\?[a-zA-Z0-9\-._~%!&amp;\$'()*+,;=:@\/?]*)?(\#[a-zA-Z0-9\-._~%!&amp;\$'()*+,;=:@\/?]*)?"</span></span>,
+          "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"http://www.example.com/aDocument?foo#bar"</span>
+        </span>}</span>,
+        "<span class="hljs-attribute">ical</span>": <span class="hljs-value">{
+          "<span class="hljs-attribute">description</span>":<span class="hljs-value"><span class="hljs-string">"iCal format defined in https://tools.ietf.org/html/rfc5545"</span></span>,
+          "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^BEGIN:VCALENDAR[\S\s]+END:VCALENDAR$"</span></span>,
+          "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"BEGIN:VCALENDAR  END:VCALENDAR"</span>
+        </span>}</span>,
+        "<span class="hljs-attribute">point2D</span>": <span class="hljs-value">{
+          "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"The coordinates of a point, where “0;0” is the upper left corner of the coordinate system."</span></span>,
+          "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^\d{6};\d{6}$"</span></span>,
+          "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"300;200"</span>
+        </span>}</span>,
+        "<span class="hljs-attribute">rectangle2D</span>": <span class="hljs-value">{
+          "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"The description of a rectangle. The first two values describe the upper left corner of the rectangle, where “0;0” is the upper left corner of the coordinate system. Value 3 describes the width, value 4 the height of the rectangle."</span></span>,
+          "<span class="hljs-attribute">regex</span>": <span class="hljs-value"><span class="hljs-string">"^\d{6};\d{6};\d{6};\d{6}$"</span></span>,
+          "<span class="hljs-attribute">example</span>": <span class="hljs-value"><span class="hljs-string">"0;0;1280;640"</span>
+        </span>}
+      </span>}</code>
+      </code></pre><p>It is also allowed to define a dedicated regular expression pattern as format on property definition level.</p>
       <h4 id="number-vs-integer">number vs integer</h4>
       <p>JSON does not allow non-numbers like <code>NaN</code>, nor does it make any distinction between integer and floating point. If the format <code>integer</code> is used in this document or the object definitions, the meaning is that a service will send and expect integer values. The parsing must be compatible with parsing a number into an integer, because there is no distinction during transfer (<code>on the wire</code>). If the format is defined as <code>number</code>, neither client nor service may parse it as an integer.</p>
       <h4 id="language-tags">Language tags</h4>
@@ -2258,27 +2245,28 @@ d2cb3c92-ad8f-<span class="hljs-number">496f</span>-b463-<span class="hljs-numbe
         <a id="serviceCategoryNames"></a>Service category names</h4>
       <p>Services are categorized to let clients register and find similar services. Services are found via <code>GET</code>on root level, using the query parameter <code>?servicecategory=&lt;name&gt;</code>, wherein <code>&lt;name&gt;</code> is one of the following category names:</p>
       <pre><code class="lang-javascript"><code class="hljs javascript">[
-  <span class="hljs-string">"addresses"</span>,        <span class="hljs-comment">// address related information</span>
-  <span class="hljs-string">"auth"</span>,             <span class="hljs-comment">// authentication and authorization</span>
-  <span class="hljs-string">"car"</span>,              <span class="hljs-comment">// vehicle states, vehicle configurations</span>
-  <span class="hljs-string">"cdn"</span>,              <span class="hljs-comment">// static content</span>
-  <span class="hljs-string">"charging"</span>,         <span class="hljs-comment">// charging management</span>
-  <span class="hljs-string">"ev"</span>,               <span class="hljs-comment">// electric vehicle information, states and configurations</span>
-  <span class="hljs-string">"search"</span>,           <span class="hljs-comment">// dedicated searches that aggregate general searching</span>
-  <span class="hljs-string">"hybrid"</span>,           <span class="hljs-comment">// HEV related information, states and configurations</span>
-  <span class="hljs-string">"map"</span>,              <span class="hljs-comment">// digital map</span>
-  <span class="hljs-string">"maprendering"</span>,     <span class="hljs-comment">// visual maps</span>
-  <span class="hljs-string">"inputdevices"</span>,     <span class="hljs-comment">// input devices like optical sensors, hardkeys, capacitive keys</span>
-  <span class="hljs-string">"media"</span>,            <span class="hljs-comment">// media related like rendering, queues(collections)</span>
-  <span class="hljs-string">"medialibrary"</span>,     <span class="hljs-comment">// services hosting media items like tracks, albums or videos</span>
-  <span class="hljs-string">"mixer"</span>,            <span class="hljs-comment">// audio management</span>
-  <span class="hljs-string">"navigation"</span>        <span class="hljs-comment">// route calculation and navigation general</span>
-  <span class="hljs-string">"communication"</span>,    <span class="hljs-comment">// phone, messaging etc.</span>
-  <span class="hljs-string">"system"</span>,           <span class="hljs-comment">// system related, like performance, window management or registration</span>
-  <span class="hljs-string">"radio"</span>,            <span class="hljs-comment">// radio</span>
-  <span class="hljs-string">"speech"</span>            <span class="hljs-comment">// speech dialogs</span>
-]</code>
-</code></pre>
+        <span class="hljs-string">"addresses"</span>,        <span class="hljs-comment">// address related information</span>
+        <span class="hljs-string">"auth"</span>,             <span class="hljs-comment">// authentication and authorization</span>
+        <span class="hljs-string">"car"</span>,              <span class="hljs-comment">// vehicle states, vehicle configurations</span>
+        <span class="hljs-string">"cdn"</span>,              <span class="hljs-comment">// static content</span>
+        <span class="hljs-string">"charging"</span>,         <span class="hljs-comment">// charging management</span>
+        <span class="hljs-string">"ev"</span>,               <span class="hljs-comment">// electric vehicle information, states and configurations</span>
+        <span class="hljs-string">"search"</span>,           <span class="hljs-comment">// dedicated searches that aggregate general searching</span>
+        <span class="hljs-string">"hybrid"</span>,           <span class="hljs-comment">// HEV related information, states and configurations</span>
+        <span class="hljs-string">"map"</span>,              <span class="hljs-comment">// digital map</span>
+        <span class="hljs-string">"maprendering"</span>,     <span class="hljs-comment">// visual maps</span>
+        <span class="hljs-string">"inputdevices"</span>,     <span class="hljs-comment">// input devices like optical sensors, hardkeys, capacitive keys</span>
+        <span class="hljs-string">"media"</span>,            <span class="hljs-comment">// media related like rendering, queues(collections)</span>
+        <span class="hljs-string">"medialibrary"</span>,     <span class="hljs-comment">// services hosting media items like tracks, albums or videos</span>
+        <span class="hljs-string">"mixer"</span>,            <span class="hljs-comment">// audio management</span>
+        <span class="hljs-string">"navigation"</span>        <span class="hljs-comment">// route calculation and navigation general</span>
+        <span class="hljs-string">"communication"</span>,    <span class="hljs-comment">// phone, messaging etc.</span>
+        <span class="hljs-string">"system"</span>,           <span class="hljs-comment">// system related, like performance, window management or registration</span>
+        <span class="hljs-string">"radio"</span>,            <span class="hljs-comment">// radio</span>
+        <span class="hljs-string">"speech"</span>,           <span class="hljs-comment">// speech dialogs</span>
+        <span class="hljs-string">"swdl"</span>              <span class="hljs-comment">// all things related to software download</span>
+      ]</code>
+      </code></pre>
       <h4 id="language">Language</h4>
       <p>Every request may contain an <code>Accept-Language</code> Header field, which allows the client to let the service know about the accepted languages (cmp. <a href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html">RFC2616#14.4</a>).</p>
       <p>In case of language depended content (e.g. city names), the service shall add the <code>Content-Language</code> Header to the response representing the actual language used to generate the content.</p>
@@ -2294,7 +2282,7 @@ d2cb3c92-ad8f-<span class="hljs-number">496f</span>-b463-<span class="hljs-numbe
       <h3 id="namespaces">Namespaces</h3>
       <p>Namespaces are, themselves, <code>uuid</code>s. While the UUID specification gives example UUIDs for namespaces corresponding to fully qualified domain names (DNS), URLs, ISO OIDs, and X.500 DNs, any UUID can be used as the namespace when generating Version 5 <code>uuid</code>s. Thus, nesting of namespaces is possible. A good practice is to use <code>&lt;service&gt;</code> and <code>&lt;resource&gt;</code> names for namespacing.</p>
       <h3 id="version-4-random-">Version 4 (random)</h3>
-      <p>Version 4 UUIDs use a scheme relying only on random number generations. This algorithm sets the version number (4 bits) as well as two reserved bits. All other bits (the remaining 122 bits) are set using a random or pseudorandom data source. Version 4 UUIDs have the form</p>
+      <p>Version 4 UUIDs use a scheme relying only on random number generations.  This algorithm sets the version number (4 bits) as well as two reserved bits. All other bits (the remaining 122 bits) are set using a random or pseudorandom data source.  Version 4 UUIDs have the form</p>
       <pre><code><code class="hljs undefined">  xxxxxxxx-xxxx-4xxx-Yxxx-xxxxxxxxxxxx</code>
 </code></pre>
       <p>where <code>x</code> is any hexadecimal digit and <code>Y</code> is one of 8, 9, A or B.</p>
@@ -2309,7 +2297,7 @@ d2cb3c92-ad8f-<span class="hljs-number">496f</span>-b463-<span class="hljs-numbe
       <h2 id="-a-name-interfacedesignpatterns-a-interface-design-patterns">
         <a id="InterfaceDesignPatterns"></a>Interface design patterns</h2>
       <h3 id="settings">Settings</h3>
-      <p>When ever a service needs general settings which also may include a reset to factory defaults, a <code>settings</code>resource is used. The individual settings are evaluated by their name and value/state.</p>
+      <p>When ever a service needs general settings which also may include a reset to factory defaults, a <code>settings</code> resource is used. The individual settings are evaluated by their name and value/state.</p>
       <h3 id="naturally-delayed-responses">Naturally delayed responses</h3>
       <p>There are cases, where a delayed and incremental results to a query can generally be expected. In case of Bluetooth device discovery for example a server side device scan has to be triggered. In these cases an immediate response to a GET request is neither possible nor practical for client side usage. The general pattern for these kind of applications/services should follow the principle :</p>
       <p>A <code>POST</code> request on resource level is used to create a new object. The client can subscribe to <code>on change</code> events for the newly created object or poll (<code>GET</code>) it continuously. The newly created object will change over time until completion. This pattern is applicable to:</p>
@@ -2335,9 +2323,9 @@ d2cb3c92-ad8f-<span class="hljs-number">496f</span>-b463-<span class="hljs-numbe
       <p>There are cases in which an endpoint needs to present a list of items to strictly follow REST principles and/or to allow a convenient access to its information despite a lack of knowledge about these items. In particular, cases where a list is dynamically appended or prepended based on a selection made in this list by the holding object itself. An example for these use cases is a media renderer for bluetooth media - the next bluetooth track is only available once playback of this track has already started.</p>
       <p>The list will contain 0,1 or 2 virtual elements that are accessible but will just have a valid <code>id</code> and <code>uri</code> for as long as they are not pointed at. These elements will be placed at either end of the list. Once the element is referenced / pointed to by the client, an <code>atomic</code> action is executed:</p>
       <ul>
-        <li>making the virtual element non-virtual</li>
-        <li>creating a new virtual element</li>
-	<li>extend the list</li>
+      <li>making the virtual element non-virtual</li>
+      <li>creating a new virtual element</li>
+      <li>extend the list</li>
       </ul>
       <p>Only on success, an update on the list and the reference is sent.</p>
       <p><img src="img/diagram3.png" alt="virtual elements"></p>
@@ -2484,22 +2472,20 @@ d2cb3c92-ad8f-<span class="hljs-number">496f</span>-b463-<span class="hljs-numbe
 </code></pre>
       <p>response:</p>
       <pre><code><code class="hljs http"><span class="hljs-status">HTTP/1.1 <span class="hljs-number">201</span> Created</span>
-<span class="hljs-attribute">Content-Type</span>: <span class="hljs-string">application/json; charset=utf-8</span>
-<span class="hljs-attribute">Location</span>: <span class="hljs-string">&lt;URI of created service&gt;</span>
-
-<span class="json">
-{
-  "<span class="hljs-attribute">status</span>": <span class="hljs-value"><span class="hljs-string">"ok"</span>
-</span>}</span></code>
-</code></pre>
-      <h3 id="unregistration">Unregistration</h3>
+      <span class="hljs-attribute">Content-Type</span>: <span class="hljs-string">application/json; charset=utf-8</span>
+      <span class="hljs-attribute">Location</span>: <span class="hljs-string">&lt;URI of created service&gt;</span>
+      
+      <span class="json">
+      {
+        "<span class="hljs-attribute">status</span>": <span class="hljs-value"><span class="hljs-string">"ok"</span>
+      </span>}</span></code>
+      </code></pre><h3 id="unregistration">Unregistration</h3>
       <p>Unregistration is only allowed on <code>id</code> level, i.e. by sending <code>DELETE</code>. <code>DELETE</code> requests on other accessing paths will result in a <a href="#httpstatuscodes">status code</a> 400 Bad request</p>
       <p>request:</p>
       <pre><code><code class="hljs http"><span class="hljs-request">DELETE <span class="hljs-string">/&lt;service_uuid&gt;</span> HTTP/1.1</span>
-<span class="hljs-attribute">Host</span>: <span class="hljs-string">127.0.0.1:1337</span>
-<span class="hljs-attribute">Accept</span>: <span class="hljs-string">application/json;q=0.8</span></code>
-</code></pre>
-      <p>response:</p>
+      <span class="hljs-attribute">Host</span>: <span class="hljs-string">127.0.0.1:1337</span>
+      <span class="hljs-attribute">Accept</span>: <span class="hljs-string">application/json;q=0.8</span></code>
+      </code></pre><p>response:</p>
       <pre><code><code class="hljs http"><span class="hljs-status">HTTP/1.1 <span class="hljs-number">200</span> OK</span>
 <span class="hljs-attribute">Content-Type</span>: <span class="hljs-string">application/json; charset=utf-8</span>
 
